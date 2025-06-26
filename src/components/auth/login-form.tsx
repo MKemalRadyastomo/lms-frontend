@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation } from '@tanstack/react-query'
@@ -164,16 +163,6 @@ export function LoginForm() {
             )}
           </Button>
         </form>
-
-        <div className="mt-6 text-center text-sm">
-          <span className="text-gray-600">Don't have an account? </span>
-          <Link
-            href="/register"
-            className="font-medium text-blue-600 hover:text-blue-500 transition-colors"
-          >
-            Sign up here
-          </Link>
-        </div>
       </CardContent>
     </Card>
   )

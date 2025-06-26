@@ -6,7 +6,8 @@ import {
   User, 
   Role, 
   Course, 
-  CourseDetail, 
+  CourseDetail,
+  CourseCreateData,
   Category, 
   Content, 
   Assignment, 
@@ -80,8 +81,31 @@ class ApiClient {
 
   // User Methods
   async getUsers(filters: UserFilters & { page?: number; limit?: number } = {}): Promise<PaginatedResponse<User>> {
-    const response = await this.client.get<PaginatedResponse<User>>('/users', { params: filters })
-    return response.data
+    const response = await this.client.get<any>('/users', { params: filters })
+    
+    // Map backend response to frontend format
+    const backendData = response.data
+    const mappedUsers: User[] = backendData.data.map((backendUser: any) => ({
+      id: backendUser.id,
+      username: backendUser.email, // Use email as username for now
+      email: backendUser.email,
+      first_name: backendUser.name?.split(' ')[0] || '',
+      last_name: backendUser.name?.split(' ').slice(1).join(' ') || '',
+      role_id: this.mapRoleToId(backendUser.role),
+      created_at: backendUser.created_at,
+      updated_at: backendUser.created_at || new Date().toISOString(),
+      profile_picture_url: backendUser.profile_image
+    }))
+    
+    return {
+      data: mappedUsers,
+      pagination: {
+        total_items: backendData.pagination.total,
+        total_pages: backendData.pagination.last_page,
+        current_page: backendData.pagination.current_page,
+        page_size: backendData.pagination.per_page
+      }
+    }
   }
 
   async getUserById(id: number): Promise<User> {
@@ -91,13 +115,13 @@ class ApiClient {
     const backendUser = response.data
     const mappedUser: User = {
       id: backendUser.id,
-      username: backendUser.email, // Use email as username
+      username: backendUser.email, // Use email as username for now
       email: backendUser.email,
       first_name: backendUser.name?.split(' ')[0] || '', // Split name into first/last
       last_name: backendUser.name?.split(' ').slice(1).join(' ') || '',
       role_id: this.mapRoleToId(backendUser.role), // Convert role string to ID
       created_at: backendUser.created_at,
-      updated_at: backendUser.created_at, // Backend doesn't have updated_at
+      updated_at: backendUser.created_at || new Date().toISOString(), // Backend doesn't have updated_at
       profile_picture_url: backendUser.profile_image
     }
     
@@ -107,22 +131,79 @@ class ApiClient {
   // Helper method to map role strings to IDs
   private mapRoleToId(role: string): number {
     const roleMap: { [key: string]: number } = {
-      'student': 1,
-      'instructor': 2,
-      'guru': 2, // guru is same as instructor
+      'siswa': 1,    // Student in Indonesian
+      'student': 1,  // Legacy support
+      'guru': 2,     // Teacher/Instructor in Indonesian
+      'instructor': 2, // Legacy support
       'admin': 3
     }
     return roleMap[role?.toLowerCase()] || 1
   }
 
+  // Helper method to map role IDs to Indonesian strings
+  private mapIdToRole(roleId: number): string {
+    const roleMap: { [key: number]: string } = {
+      1: 'siswa',  // Student in Indonesian
+      2: 'guru',   // Teacher in Indonesian
+      3: 'admin'
+    }
+    return roleMap[roleId] || 'siswa'
+  }
+
   async createUser(userData: RegisterData): Promise<User> {
-    const response = await this.client.post<User>('/users', userData)
-    return response.data
+    // Map frontend data to backend format
+    const backendUserData = {
+      email: userData.email,
+      password: userData.password,
+      name: userData.first_name && userData.last_name 
+        ? `${userData.first_name} ${userData.last_name}`.trim()
+        : userData.username,
+      role: this.mapIdToRole(userData.role_id)
+    }
+    
+    const response = await this.client.post<any>('/users', backendUserData)
+    
+    // Map response back to frontend format
+    const backendUser = response.data
+    return {
+      id: backendUser.id,
+      username: backendUser.email,
+      email: backendUser.email,
+      first_name: backendUser.name?.split(' ')[0] || '',
+      last_name: backendUser.name?.split(' ').slice(1).join(' ') || '',
+      role_id: this.mapRoleToId(backendUser.role),
+      created_at: backendUser.created_at,
+      updated_at: backendUser.created_at || new Date().toISOString(),
+      profile_picture_url: backendUser.profile_image
+    }
   }
 
   async updateUser(id: number, userData: Partial<User>): Promise<User> {
-    const response = await this.client.put<User>(`/users/${id}`, userData)
-    return response.data
+    // Map frontend data to backend format
+    const backendUserData: any = {}
+    
+    if (userData.email) backendUserData.email = userData.email
+    if (userData.first_name || userData.last_name) {
+      backendUserData.name = `${userData.first_name || ''} ${userData.last_name || ''}`.trim()
+    }
+    if (userData.role_id) backendUserData.role = this.mapIdToRole(userData.role_id)
+    if ((userData as any).password) backendUserData.password = (userData as any).password
+    
+    const response = await this.client.put<any>(`/users/${id}`, backendUserData)
+    
+    // Map response back to frontend format
+    const backendUser = response.data
+    return {
+      id: backendUser.id,
+      username: backendUser.email,
+      email: backendUser.email,
+      first_name: backendUser.name?.split(' ')[0] || '',
+      last_name: backendUser.name?.split(' ').slice(1).join(' ') || '',
+      role_id: this.mapRoleToId(backendUser.role),
+      created_at: backendUser.created_at,
+      updated_at: backendUser.created_at || new Date().toISOString(),
+      profile_picture_url: backendUser.profile_image
+    }
   }
 
   async deleteUser(id: number): Promise<void> {
@@ -190,23 +271,94 @@ class ApiClient {
 
   // Course Methods
   async getCourses(filters: CourseFilters & { page?: number; limit?: number } = {}): Promise<PaginatedResponse<Course>> {
-    const response = await this.client.get<PaginatedResponse<Course>>('/courses', { params: filters })
-    return response.data
+    const response = await this.client.get<any>('/courses', { params: filters })
+    
+    // Map backend response to frontend format
+    const backendData = response.data
+    const mappedCourses: Course[] = backendData.data.map((backendCourse: any) => ({
+      id: backendCourse.id,
+      name: backendCourse.name,
+      description: backendCourse.description,
+      privacy: backendCourse.privacy,
+      code: backendCourse.code,
+      teacher_id: backendCourse.teacher_id,
+      teacher_name: backendCourse.teacher_name,
+      created_at: backendCourse.created_at
+    }))
+    
+    return {
+      data: mappedCourses,
+      pagination: {
+        total_items: backendData.pagination.total,
+        total_pages: backendData.pagination.last_page,
+        current_page: backendData.pagination.current_page,
+        page_size: backendData.pagination.per_page
+      }
+    }
   }
 
   async getCourseById(id: number): Promise<CourseDetail> {
-    const response = await this.client.get<CourseDetail>(`/courses/${id}`)
-    return response.data
+    const response = await this.client.get<any>(`/courses/${id}`)
+    
+    const backendCourse = response.data
+    return {
+      id: backendCourse.id,
+      name: backendCourse.name,
+      description: backendCourse.description,
+      privacy: backendCourse.privacy,
+      code: backendCourse.code,
+      teacher_id: backendCourse.teacher_id,
+      teacher_name: backendCourse.teacher_name,
+      created_at: backendCourse.created_at
+    }
   }
 
-  async createCourse(courseData: Omit<Course, 'id' | 'created_at' | 'updated_at'>): Promise<Course> {
-    const response = await this.client.post<Course>('/courses', courseData)
-    return response.data
+  async createCourse(courseData: CourseCreateData): Promise<Course> {
+    // Map frontend data to backend format
+    const backendCourseData = {
+      name: courseData.name,
+      description: courseData.description,
+      privacy: courseData.privacy,
+      teacher_id: courseData.teacher_id // Send as teacher_id to match backend expectation
+    }
+    
+    const response = await this.client.post<any>('/courses', backendCourseData)
+    
+    const backendCourse = response.data
+    return {
+      id: backendCourse.id,
+      name: backendCourse.name,
+      description: backendCourse.description,
+      privacy: backendCourse.privacy,
+      code: backendCourse.code,
+      teacher_id: backendCourse.teacher_id,
+      teacher_name: backendCourse.teacher_name,
+      created_at: backendCourse.created_at
+    }
   }
 
-  async updateCourse(id: number, courseData: Partial<Course>): Promise<Course> {
-    const response = await this.client.put<Course>(`/courses/${id}`, courseData)
-    return response.data
+  async updateCourse(id: number, courseData: Partial<CourseCreateData>): Promise<Course> {
+    // Map frontend data to backend format
+    const backendCourseData: any = {}
+    
+    if (courseData.name) backendCourseData.name = courseData.name
+    if (courseData.description !== undefined) backendCourseData.description = courseData.description
+    if (courseData.privacy) backendCourseData.privacy = courseData.privacy
+    if (courseData.teacher_id) backendCourseData.teacher_id = courseData.teacher_id
+    
+    const response = await this.client.put<any>(`/courses/${id}`, backendCourseData)
+    
+    const backendCourse = response.data
+    return {
+      id: backendCourse.id,
+      name: backendCourse.name,
+      description: backendCourse.description,
+      privacy: backendCourse.privacy,
+      code: backendCourse.code,
+      teacher_id: backendCourse.teacher_id,
+      teacher_name: backendCourse.teacher_name,
+      created_at: backendCourse.created_at
+    }
   }
 
   async deleteCourse(id: number): Promise<void> {

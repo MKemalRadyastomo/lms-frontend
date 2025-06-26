@@ -50,20 +50,26 @@ export interface Category {
 
 export interface Course {
   id: number
-  title: string
+  name: string // Backend uses 'name' not 'title'
   description?: string
-  category_id: number
-  instructor_id: number
-  status: 'draft' | 'published' | 'archived'
+  privacy: 'private' | 'public'
+  code: string // Auto-generated 6-character code
+  teacher_id: number
+  teacher_name?: string // From JOIN with users table
   created_at: string
-  updated_at: string
 }
 
 export interface CourseDetail extends Course {
-  category: Category
-  instructor: User
-  content_count: number
-  enrollment_count: number
+  // Additional details for course detail view
+  content_count?: number
+  enrollment_count?: number
+}
+
+export interface CourseCreateData {
+  name: string
+  description?: string
+  privacy?: 'private' | 'public'
+  teacher_id: number
 }
 
 // Content Types
