@@ -41,14 +41,14 @@ export default function DashboardPage() {
   const currentUser = AuthManager.getUserData()
   const userId = AuthManager.getUserId()
 
-  // Fetch user data if not available
+  // Temporarily comment out data fetching to debug navigation
+  /*
   const { data: userData } = useQuery({
     queryKey: ['user', userId],
     queryFn: () => apiClient.getUserById(userId!),
     enabled: !!userId && !currentUser,
   })
 
-  // Fetch dashboard statistics
   const { data: coursesData } = useQuery({
     queryKey: ['courses', 'dashboard'],
     queryFn: () => apiClient.getCourses({ limit: 100 }),
@@ -64,17 +64,17 @@ export default function DashboardPage() {
     queryKey: ['assignments', 'dashboard'],
     queryFn: () => apiClient.getAssignments({ limit: 100 }),
   })
+  */
 
   useEffect(() => {
     if (currentUser) {
       setUser(currentUser)
-    } else if (userData) {
+    } /* else if (userData) {
       setUser(userData)
       AuthManager.setUserData(userData)
-    }
-  }, [currentUser, userData])
+    } */
+  }, [currentUser /*, userData*/])
 
-  // Memoize user role calculations to prevent re-renders
   const userRoleInfo = useMemo(() => {
     if (!user) return { isAdmin: false, isInstructor: false, isStudent: false };
     
@@ -88,41 +88,15 @@ export default function DashboardPage() {
 
   const { isAdmin, isInstructor, isStudent } = userRoleInfo;
 
-  // Calculate dashboard statistics
+  // Simplified stats for testing
   const stats: DashboardStats = {
-    totalCourses: coursesData?.data.length || 0,
-    totalUsers: usersData?.data.length || 0,
-    totalAssignments: assignmentsData?.data.length || 0,
-    recentActivity: 12 // This would come from a real activity feed
+    totalCourses: 0,
+    totalUsers: 0,
+    totalAssignments: 0,
+    recentActivity: 0
   }
 
-  // Memoize recent activity data to prevent unnecessary re-renders
-  const recentActivity: RecentActivity[] = useMemo(() => [
-    {
-      id: '1',
-      type: 'assignment',
-      title: 'New Assignment Available',
-      description: 'Essay on World War II - Due in 3 days',
-      time: '2 hours ago',
-      status: 'pending'
-    },
-    {
-      id: '2',
-      type: 'course',
-      title: 'Course Updated',
-      description: 'Introduction to Python - New lecture added',
-      time: '1 day ago',
-      status: 'completed'
-    },
-    {
-      id: '3',
-      type: 'submission',
-      title: 'Assignment Graded',
-      description: 'JavaScript Fundamentals Quiz - Score: 85/100',
-      time: '2 days ago',
-      status: 'completed'
-    }
-  ], []); // Empty dependency array since this is static data
+  const recentActivity: RecentActivity[] = [];
 
   if (!user) {
     return (

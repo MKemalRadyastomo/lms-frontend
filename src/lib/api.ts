@@ -11,8 +11,14 @@ import {
   Category, 
   Content, 
   Assignment, 
-  AssignmentDetail, 
+  AssignmentDetail,
+  AssignmentCreateData,
   Submission,
+  SubmissionDetail,
+  EssaySubmissionData,
+  FileSubmissionData,
+  QuizSubmissionData,
+  QuizAnswer,
   LoginCredentials,
   RegisterData,
   AuthResponse,
@@ -386,28 +392,54 @@ class ApiClient {
   }
 
   // Assignment Methods
-  async getAssignments(filters: AssignmentFilters & { page?: number; limit?: number } = {}): Promise<PaginatedResponse<Assignment>> {
-    const response = await this.client.get<PaginatedResponse<Assignment>>('/assignments', { params: filters })
+  async getCourseAssignments(courseId: number, filters: Omit<AssignmentFilters, 'course_id'> & { page?: number; limit?: number } = {}): Promise<PaginatedResponse<Assignment>> {
+    const response = await this.client.get<any>(`/courses/${courseId}/assignments`, { params: filters })
+    
+    // Handle the backend response format
+    const backendData = response.data
+    
+    // If the response is an array (no pagination), wrap it
+    if (Array.isArray(backendData)) {
+      return {
+        data: backendData,
+        pagination: {
+          total_items: backendData.length,
+          total_pages: 1,
+          current_page: 1,
+          page_size: backendData.length
+        }
+      }
+    }
+    
+    // If the response has pagination info
+    return {
+      data: backendData.results || backendData.data,
+      pagination: {
+        total_items: backendData.totalResults || backendData.total,
+        total_pages: backendData.totalPages || backendData.last_page,
+        current_page: backendData.page || backendData.current_page,
+        page_size: backendData.limit || backendData.per_page
+      }
+    }
+  }
+
+  async getAssignmentById(courseId: number, assignmentId: number): Promise<AssignmentDetail> {
+    const response = await this.client.get<any>(`/courses/${courseId}/assignments/${assignmentId}`)
     return response.data
   }
 
-  async getAssignmentById(id: number): Promise<AssignmentDetail> {
-    const response = await this.client.get<AssignmentDetail>(`/assignments/${id}`)
+  async createCourseAssignment(courseId: number, assignmentData: AssignmentCreateData): Promise<Assignment> {
+    const response = await this.client.post<any>(`/courses/${courseId}/assignments`, assignmentData)
     return response.data
   }
 
-  async createAssignment(assignmentData: Omit<Assignment, 'id' | 'created_at' | 'updated_at'>): Promise<Assignment> {
-    const response = await this.client.post<Assignment>('/assignments', assignmentData)
+  async updateCourseAssignment(courseId: number, assignmentId: number, assignmentData: Partial<AssignmentCreateData>): Promise<Assignment> {
+    const response = await this.client.put<any>(`/courses/${courseId}/assignments/${assignmentId}`, assignmentData)
     return response.data
   }
 
-  async updateAssignment(id: number, assignmentData: Partial<Assignment>): Promise<Assignment> {
-    const response = await this.client.put<Assignment>(`/assignments/${id}`, assignmentData)
-    return response.data
-  }
-
-  async deleteAssignment(id: number): Promise<void> {
-    await this.client.delete(`/assignments/${id}`)
+  async deleteCourseAssignment(courseId: number, assignmentId: number): Promise<void> {
+    await this.client.delete(`/courses/${courseId}/assignments/${assignmentId}`)
   }
 
   // Submission Methods
@@ -456,6 +488,14 @@ class ApiClient {
   async getAssignmentSubmissions(assignmentId: number): Promise<PaginatedResponse<Submission>> {
     const response = await this.client.get<PaginatedResponse<Submission>>(`/assignments/${assignmentId}/submissions`)
     return response.data
+  }
+
+  async gradeSubmission(submissionId: number, grade?: number, feedback?: string): Promise<Submission> {
+    const response = await this.client.patch<Submission>(`/submissions/${submissionId}/grade`, {
+      grade,
+      feedback,
+    });
+    return response.data;
   }
 
   // Utility Methods
