@@ -1,8 +1,6 @@
-import axios, { AxiosInstance, AxiosResponse } from 'axios'
+import axios, { AxiosInstance } from 'axios'
 import Cookies from 'js-cookie'
 import { 
-  ApiResponse, 
-  PaginatedResponse, 
   User, 
   Role, 
   Course, 
@@ -24,22 +22,26 @@ import {
   AuthResponse,
   CourseFilters,
   UserFilters,
-  AssignmentFilters
+  AssignmentFilters,
+  ApiResponse, // Import from @/types
+  PaginatedResponse // Import from @/types
 } from '@/types'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/v1'
 
+export const api: AxiosInstance = axios.create({
+  baseURL: API_BASE_URL,
+  timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
 class ApiClient {
-  private client: AxiosInstance
+  private client: AxiosInstance;
 
   constructor() {
-    this.client = axios.create({
-      baseURL: API_BASE_URL,
-      timeout: 10000,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    })
+    this.client = api;
 
     // Request interceptor to add auth token
     this.client.interceptors.request.use(
@@ -119,7 +121,7 @@ class ApiClient {
     
     // Map backend response to frontend User type
     const backendUser = response.data
-    const mappedUser: User = {
+    return {
       id: backendUser.id,
       username: backendUser.email, // Use email as username for now
       email: backendUser.email,
@@ -130,8 +132,6 @@ class ApiClient {
       updated_at: backendUser.created_at || new Date().toISOString(), // Backend doesn't have updated_at
       profile_picture_url: backendUser.profile_image
     }
-    
-    return mappedUser
   }
 
   // Helper method to map role strings to IDs
@@ -507,4 +507,7 @@ class ApiClient {
 
 // Create and export a singleton instance
 export const apiClient = new ApiClient()
-export default apiClient
+
+
+
+

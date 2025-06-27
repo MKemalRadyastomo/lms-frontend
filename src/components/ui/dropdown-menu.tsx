@@ -17,12 +17,15 @@ const DropdownMenuRadioGroup = DropdownMenuPrimitive.RadioGroup
 const DropdownMenuSubTrigger = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.SubTrigger>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.SubTrigger>
->(({ className, inset, children, ...props }, ref) => (
+>(({
+  className,
+  children,
+  ...props
+}, ref) => (
   <DropdownMenuPrimitive.SubTrigger
     ref={ref}
     className={cn(
       "flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none focus:bg-accent data-[state=open]:bg-accent",
-      inset && "pl-8",
       className
     )}
     {...props}
@@ -69,12 +72,11 @@ DropdownMenuContent.displayName = DropdownMenuPrimitive.Content.displayName
 const DropdownMenuItem = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.Item>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Item>
->(({ className, inset, ...props }, ref) => (
+>(({ className, ...props }, ref) => (
   <DropdownMenuPrimitive.Item
     ref={ref}
     className={cn(
       "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
-      inset && "pl-8",
       className
     )}
     {...props}

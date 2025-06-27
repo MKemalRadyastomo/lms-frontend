@@ -39,7 +39,7 @@ export const registerSchema = z.object({
     .string()
     .max(50, 'Last name must be less than 50 characters')
     .optional(),
-  roleId: z
+  role_id: z
     .number()
     .min(1, 'Please select a role'),
 }).refine((data) => data.password === data.confirmPassword, {

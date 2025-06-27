@@ -14,6 +14,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { loginSchema, type LoginFormData } from '@/lib/validators'
 import { apiClient } from '@/lib/api'
 import { AuthManager } from '@/lib/auth'
+import { AuthResponse } from '@/types'
 
 export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false)
@@ -30,7 +31,7 @@ export function LoginForm() {
 
   const loginMutation = useMutation({
     mutationFn: apiClient.login.bind(apiClient),
-    onSuccess: async (data) => {
+    onSuccess: async (data: AuthResponse) => {
       console.log('=== LOGIN SUCCESS DEBUG ===')
       console.log('Raw backend response:', data)
       console.log('Token:', data.token)

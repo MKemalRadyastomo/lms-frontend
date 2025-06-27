@@ -1,1 +1,50 @@
-'use client'\n\nimport { useEffect } from 'react'\nimport { useRouter } from 'next/navigation'\nimport { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'\nimport { Button } from '@/components/ui/button'\nimport { ShieldX } from 'lucide-react'\n\nexport default function RegisterPage() {\n  const router = useRouter()\n\n  useEffect(() => {\n    // Redirect to login after a short delay\n    const timer = setTimeout(() => {\n      router.push('/login')\n    }, 3000)\n\n    return () => clearTimeout(timer)\n  }, [router])\n\n  return (\n    <div className=\"min-h-screen flex items-center justify-center bg-gray-50\">\n      <Card className=\"w-full max-w-md\">\n        <CardHeader className=\"text-center\">\n          <div className=\"mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4\">\n            <ShieldX className=\"h-8 w-8 text-red-600\" />\n          </div>\n          <CardTitle className=\"text-2xl\">Registration Disabled</CardTitle>\n          <CardDescription>\n            User registration is not available. Only administrators can create new user accounts.\n          </CardDescription>\n        </CardHeader>\n        <CardContent className=\"text-center space-y-4\">\n          <p className=\"text-sm text-gray-600\">\n            If you need an account, please contact your system administrator.\n          </p>\n          <Button \n            onClick={() => router.push('/login')}\n            className=\"w-full\"\n          >\n            Go to Login\n          </Button>\n          <p className=\"text-xs text-gray-500\">\n            Redirecting to login page in 3 seconds...\n          </p>\n        </CardContent>\n      </Card>\n    </div>\n  )\n}\n
+'use client'
+
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { ShieldX } from 'lucide-react'
+
+export default function RegisterPage() {
+  const router = useRouter()
+
+  useEffect(() => {
+    // Redirect to login after a short delay
+    const timer = setTimeout(() => {
+      router.push('/login')
+    }, 3000)
+
+    return () => clearTimeout(timer)
+  }, [router])
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+            <ShieldX className="h-8 w-8 text-red-600" />
+          </div>
+          <CardTitle className="text-2xl">Registration Disabled</CardTitle>
+          <CardDescription>
+            User registration is not available. Only administrators can create new user accounts.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="text-center space-y-4">
+          <p className="text-sm text-gray-600">
+            If you need an account, please contact your system administrator.
+          </p>
+          <Button 
+            onClick={() => router.push('/login')}
+            className="w-full"
+          >
+            Go to Login
+          </Button>
+          <p className="text-xs text-gray-500">
+            Redirecting to login page in 3 seconds...
+          </p>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}

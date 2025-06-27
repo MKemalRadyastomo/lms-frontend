@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { 
   Search, 
@@ -35,6 +36,7 @@ export function CourseList({ showCreateForm = false, onCourseSelect }: CourseLis
   const [page, setPage] = useState(1)
   const queryClient = useQueryClient()
   const currentUser = AuthManager.getUserData()
+  const router = useRouter()
 
   const filters: CourseFilters & { page: number; limit: number } = {
     page,
@@ -57,8 +59,7 @@ export function CourseList({ showCreateForm = false, onCourseSelect }: CourseLis
 
   const handleViewCourse = (course: Course) => {
     onCourseSelect?.(course)
-    // In the future, this could navigate to course detail page
-    console.log('View course:', course)
+    router.push(`/courses/${course.id}`)
   }
 
   const handleFormSuccess = () => {

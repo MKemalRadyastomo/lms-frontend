@@ -42,7 +42,6 @@ export default function DashboardPage() {
   const userId = AuthManager.getUserId()
 
   // Temporarily comment out data fetching to debug navigation
-  /*
   const { data: userData } = useQuery({
     queryKey: ['user', userId],
     queryFn: () => apiClient.getUserById(userId!),
@@ -62,9 +61,8 @@ export default function DashboardPage() {
 
   const { data: assignmentsData } = useQuery({
     queryKey: ['assignments', 'dashboard'],
-    queryFn: () => apiClient.getAssignments({ limit: 100 }),
+    queryFn: () => apiClient.getCourseAssignments(1, { limit: 100 }), // Using a placeholder courseId for now
   })
-  */
 
   useEffect(() => {
     if (currentUser) {
@@ -90,9 +88,9 @@ export default function DashboardPage() {
 
   // Simplified stats for testing
   const stats: DashboardStats = {
-    totalCourses: 0,
-    totalUsers: 0,
-    totalAssignments: 0,
+    totalCourses: coursesData?.pagination.total_items || 0,
+    totalUsers: usersData?.pagination.total_items || 0,
+    totalAssignments: assignmentsData?.pagination.total_items || 0,
     recentActivity: 0
   }
 
