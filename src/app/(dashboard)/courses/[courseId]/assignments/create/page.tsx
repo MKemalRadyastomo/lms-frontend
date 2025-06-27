@@ -23,19 +23,33 @@ const CreateAssignmentPage = () => {
   });
 
   const createAssignmentMutation = useMutation({
-    mutationFn: (data: AssignmentCreateData) => createAssignment(courseId, data),
-    onSuccess: () => {
+    mutationFn: async (data: AssignmentCreateData) => {
+      try {
+        const result = await createAssignment(courseId, data);
+        return result;
+      } catch (error: any) {
+        // Enhanced error handling
+        const errorMessage = error?.response?.data?.message || error?.message || 'Gagal membuat tugas';
+        throw new Error(errorMessage);
+      }
+    },
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['assignments', courseId] });
       toast({
-        title: 'Success',
-        description: 'Assignment created successfully.',
+        title: 'Berhasil!',
+        description: 'Tugas berhasil dibuat dan sudah tersedia untuk siswa.',
+        variant: 'default',
       });
-      router.push(`/courses/${courseId}/assignments`);
+      // Navigate after short delay to show toast
+      setTimeout(() => {
+        router.push(`/courses/${courseId}/assignments`);
+      }, 1000);
     },
-    onError: (error) => {
+    onError: (error: Error) => {
+      console.error('Assignment creation error:', error);
       toast({
-        title: 'Error',
-        description: `Failed to create assignment: ${error.message}`,
+        title: 'Gagal Membuat Tugas',
+        description: error.message || 'Terjadi kesalahan saat membuat tugas. Silakan coba lagi.',
         variant: 'destructive',
       });
     },

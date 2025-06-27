@@ -135,7 +135,7 @@ export const updateSubmission = async (
 ): Promise<Submission> => {
   try {
     const response = await api.put<ApiResponse<Submission>>(
-      `/submissions/${submissionId}`,
+      `/assignments/submissions/${submissionId}`,
       data
     );
     return response.data.data;
@@ -159,7 +159,7 @@ export const gradeSubmission = async (
 ): Promise<Submission> => {
   try {
     const response = await api.patch<ApiResponse<Submission>>(
-      `/submissions/${submissionId}/grade`,
+      `/assignments/submissions/${submissionId}/grade`,
       { grade, feedback }
     );
     return response.data.data;

@@ -25,6 +25,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import Link from 'next/link';
 
 interface AssignmentListProps {
   courseId: number;
@@ -195,10 +196,12 @@ export const AssignmentList: React.FC<AssignmentListProps> = ({ courseId, userRo
           }
         </p>
         {(userRole === 'teacher' || userRole === 'admin') && (
-          <Button>
-            <BookOpen className="h-4 w-4 mr-2" />
-            Buat Tugas Pertama
-          </Button>
+          <Link href={`/courses/${courseId}/assignments/create`}>
+            <Button>
+              <BookOpen className="h-4 w-4 mr-2" />
+              Buat Tugas Pertama
+            </Button>
+          </Link>
         )}
       </div>
     );
