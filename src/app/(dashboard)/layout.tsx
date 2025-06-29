@@ -8,6 +8,7 @@ import {
   User as UserIcon,
   Users,
   X,
+  BarChart3,
 } from "lucide-react";
 import { EnhancedHeader } from "@/components/layout/EnhancedHeader";
 import Link from "next/link";
@@ -75,6 +76,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       { name: "Dashboard", href: "/dashboard", icon: Home },
       { name: "Kursus", href: "/courses", icon: BookOpen },
       { name: "Tugas", href: "/assignments", icon: BookOpen }, // Added Assignments link
+      { name: "Analytics", href: "/analytics", icon: BarChart3 }, // Added Analytics link
       { name: "Profil", href: "/profile", icon: UserIcon },
     ];
 

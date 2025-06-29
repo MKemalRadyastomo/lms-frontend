@@ -14,7 +14,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 // Create axios instance with auth headers
 const createApiClient = () => {
-  const token = AuthManager.getToken();
+  const token = AuthManager.getAuthToken();
   return axios.create({
     baseURL: `${API_BASE_URL}/v1`,
     headers: {
@@ -34,14 +34,14 @@ export const profileApi = {
   },
 
   // Get user profile by ID
-  getProfile: async (userId: string): Promise<ProfileData> => {
+  getProfile: async (userId: number | string): Promise<ProfileData> => {
     const api = createApiClient();
     const response = await api.get(`/users/${userId}`);
     return response.data;
   },
 
   // Update user profile
-  updateProfile: async (userId: string, data: ProfileUpdateRequest): Promise<ProfileData> => {
+  updateProfile: async (userId: number | string, data: ProfileUpdateRequest): Promise<ProfileData> => {
     const api = createApiClient();
     
     // Map frontend field names to backend field names
@@ -54,7 +54,7 @@ export const profileApi = {
     };
     
     // Remove undefined fields
-    Object.keys(backendData).forEach(key => {
+    (Object.keys(backendData) as (keyof typeof backendData)[]).forEach(key => {
       if (backendData[key] === undefined) {
         delete backendData[key];
       }
@@ -65,7 +65,7 @@ export const profileApi = {
   },
 
   // Change password
-  changePassword: async (userId: string, data: PasswordChangeRequest): Promise<{ message: string }> => {
+  changePassword: async (userId: number | string, data: PasswordChangeRequest): Promise<{ message: string }> => {
     const api = createApiClient();
     const response = await api.put(`/users/${userId}/password`, {
       current_password: data.current_password,
@@ -76,11 +76,11 @@ export const profileApi = {
 
   // Upload profile picture
   uploadProfilePicture: async (
-    userId: string, 
+    userId: number | string, 
     file: File,
     onProgress?: (progress: number) => void
   ): Promise<ProfilePictureUploadResponse> => {
-    const token = AuthManager.getToken();
+    const token = AuthManager.getAuthToken();
     const formData = new FormData();
     formData.append('profile_picture', file);
 
@@ -104,7 +104,7 @@ export const profileApi = {
   },
 
   // Get user statistics
-  getUserStats: async (userId: string): Promise<ProfileStats> => {
+  getUserStats: async (userId: number | string): Promise<ProfileStats> => {
     const api = createApiClient();
     try {
       const response = await api.get(`/users/${userId}/stats`);
@@ -126,7 +126,7 @@ export const profileApi = {
   },
 
   // Get user activities
-  getUserActivities: async (userId: string, limit = 10): Promise<ProfileActivity[]> => {
+  getUserActivities: async (userId: number | string, limit = 10): Promise<ProfileActivity[]> => {
     const api = createApiClient();
     try {
       const response = await api.get(`/users/${userId}/activities?limit=${limit}`);
@@ -139,7 +139,7 @@ export const profileApi = {
   },
 
   // Update user settings
-  updateSettings: async (userId: string, settings: SettingsUpdateRequest): Promise<{ message: string }> => {
+  updateSettings: async (userId: number | string, settings: SettingsUpdateRequest): Promise<{ message: string }> => {
     const api = createApiClient();
     try {
       const response = await api.put(`/users/${userId}/settings`, settings);
@@ -153,7 +153,7 @@ export const profileApi = {
   },
 
   // Get user settings
-  getSettings: async (userId: string): Promise<any> => {
+  getSettings: async (userId: number | string): Promise<any> => {
     const api = createApiClient();
     try {
       const response = await api.get(`/users/${userId}/settings`);

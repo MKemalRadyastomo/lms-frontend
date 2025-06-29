@@ -39,7 +39,7 @@ export interface ProfileSettings {
 }
 
 export interface ProfileData {
-  id: string;
+  id: number;
   username: string;
   email: string;
   first_name?: string;

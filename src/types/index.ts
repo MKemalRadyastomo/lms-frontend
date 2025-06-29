@@ -5,9 +5,14 @@ export interface User {
   email: string
   first_name?: string
   last_name?: string
+  phone?: string
+  bio?: string
+  date_of_birth?: string
   role_id: number
   created_at: string
   updated_at: string
+  last_login_at?: string
+  email_verified_at?: string
   profile_picture_url?: string
 }
 

@@ -46,6 +46,11 @@ export class AuthManager {
     return userData ? JSON.parse(userData) : null
   }
 
+  static updateUserData(user: User): void {
+    // Update the stored user data with new information
+    this.setUserData(user)
+  }
+
   static clearAuth(): void {
     Cookies.remove(AUTH_TOKEN_KEY)
     Cookies.remove(USER_ID_KEY)

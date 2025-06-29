@@ -10,12 +10,15 @@ import {
   Calendar,
   Award,
   Clock,
-  AlertCircle
+  AlertCircle,
+  BarChart3
 } from 'lucide-react'
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { NavigationTest } from '@/components/debug/navigation-test'
+import { AnalyticsDashboard } from '@/components/analytics'
 import { apiClient } from '@/lib/api'
 import { AuthManager } from '@/lib/auth'
 import { User, Course, Assignment } from '@/types'
