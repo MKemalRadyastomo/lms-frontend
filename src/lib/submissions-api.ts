@@ -41,7 +41,7 @@ export const submitEssay = async (
  */
 export const submitFile = async (
   assignmentId: number,
-  data: FormData // Use FormData for file uploads
+  data: FormData
 ): Promise<Submission> => {
   try {
     const response = await api.post<ApiResponse<Submission>>(

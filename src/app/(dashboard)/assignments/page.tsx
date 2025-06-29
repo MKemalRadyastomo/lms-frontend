@@ -12,6 +12,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { BookOpen, AlertCircle, GraduationCap } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Link from 'next/link';
 
 const AssignmentsPage = () => {
   const { user, isLoading: isUserLoading } = useAuth();
@@ -34,8 +35,8 @@ const AssignmentsPage = () => {
       
       const assignmentPromises = courses.data.map(async (course: Course) => {
         try {
-          const response = await apiClient.get(`/courses/${course.id}/assignments`);
-          return response.data.data?.map((assignment: Assignment) => ({
+          const response = await apiClient.getCourseAssignments(course.id);
+          return response.data.map((assignment: Assignment) => ({
             ...assignment,
             course_name: course.name,
             course_code: course.code
@@ -101,12 +102,12 @@ const AssignmentsPage = () => {
                       <CardDescription className="text-sm">{course.code}</CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <a href={`/courses/${course.id}/assignments/create`} className="inline-block w-full">
+                      <Link href={`/courses/${course.id}/assignments/create`} className="inline-block w-full">
                         <div className="bg-blue-50 hover:bg-blue-100 transition-colors p-3 rounded-lg text-center">
                           <BookOpen className="h-4 w-4 mx-auto mb-1 text-blue-600" />
                           <span className="text-sm font-medium text-blue-700">Buat Tugas</span>
                         </div>
-                      </a>
+                      </Link>
                     </CardContent>
                   </Card>
                 ))}

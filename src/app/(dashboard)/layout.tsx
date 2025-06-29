@@ -1,24 +1,20 @@
 "use client";
 
 import {
-  Bell,
   BookOpen,
   Home,
-  LogOut,
-  Menu,
-  Search,
   Settings,
   Shield,
   User as UserIcon,
   Users,
   X,
 } from "lucide-react";
+import { EnhancedHeader } from "@/components/layout/EnhancedHeader";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useMemo, useCallback } from "react";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { AuthManager } from "@/lib/auth";
 import { User } from "@/types";
 
@@ -118,19 +114,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     return isActive;
   }, [pathname]);
 
-  // Memoize the logout handler
-  const handleLogout = useCallback(async () => {
-    console.log("Logout initiated."); // Debug log
-    try {
-      AuthManager.clearAuth();
-      router.push("/login");
-    } catch (error) {
-      console.error("Logout error:", error);
-      // Force logout even if API call fails
-      AuthManager.clearAuth();
-      router.push("/login");
-    }
-  }, [router]);
+
 
   // Memoize sidebar toggle
   const toggleSidebar = useCallback(() => {
@@ -260,131 +244,18 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           </div>
         </nav>
 
-        {/* User info and logout */}
-        <div className="mt-auto p-4 border-t bg-gray-50">
-          <div className="flex items-center space-x-3 mb-3 p-2 rounded-lg bg-white shadow-sm">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white text-sm font-semibold shadow-sm">
-              {user?.first_name?.[0] ||
-                user?.username?.[0]?.toUpperCase() ||
-                "U"}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-gray-900 truncate">
-                {user?.first_name && user?.last_name
-                  ? `${user.first_name} ${user.last_name}`
-                  : user?.username || "User"}
-              </p>
-              <div className="flex items-center space-x-2">
-                <p className="text-xs text-gray-500 truncate">
-                  {user?.email || "user@example.com"}
-                </p>
-                <span
-                  className={`
-                  inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
-                  ${
-                    user?.role_id === 3
-                      ? "bg-purple-100 text-purple-800"
-                      : user?.role_id === 2
-                      ? "bg-green-100 text-green-800"
-                      : "bg-blue-100 text-blue-800"
-                  }
-                `}
-                >
-                  {user?.role_id === 3
-                    ? "Admin"
-                    : user?.role_id === 2
-                    ? "Guru"
-                    : "Siswa"}
-                </span>
-              </div>
-            </div>
+        {/* Bottom spacing */}
+        <div className="mt-auto p-4">
+          <div className="text-xs text-gray-400 text-center">
+            Learning Management System
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleLogout}
-            className="w-full justify-start text-gray-700 hover:bg-red-50 hover:text-red-700 transition-colors duration-200 rounded-lg"
-          >
-            <LogOut className="mr-2 h-4 w-4" />
-            Sign Out
-          </Button>
         </div>
       </div>
 
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Top bar */}
-        <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm shadow-sm border-b">
-          <div className="flex items-center justify-between h-16 px-4">
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={toggleSidebar}
-                className="lg:hidden hover:bg-gray-100 transition-colors duration-200"
-              >
-                <Menu className="h-6 w-6" />
-              </Button>
-
-              <div className="hidden md:block">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <Input
-                    placeholder="Search courses, assignments..."
-                    className="pl-10 w-96 border-gray-200 focus:border-blue-300 focus:ring-blue-100 transition-all duration-200"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-3">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="relative hover:bg-gray-100 transition-colors duration-200"
-              >
-                <Bell className="h-5 w-5" />
-                {/* Notification badge - can be made dynamic */}
-                <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full text-xs flex items-center justify-center">
-                  <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-                </span>
-              </Button>
-
-              <div className="flex items-center space-x-2 hover:bg-gray-50 rounded-lg p-2 transition-colors duration-200">
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white text-sm font-semibold shadow-sm">
-                  {user?.first_name?.[0] ||
-                    user?.username?.[0]?.toUpperCase() ||
-                    "U"}
-                </div>
-                <div className="hidden md:block">
-                  <span className="text-sm font-medium text-gray-900">
-                    {user?.first_name && user?.last_name
-                      ? `${user.first_name} ${user.last_name}`
-                      : user?.username || "User"}
-                  </span>
-                  <span
-                    className={`
-                    block text-xs font-medium
-                    ${
-                      user?.role_id === 3
-                        ? "text-purple-600"
-                        : user?.role_id === 2
-                        ? "text-green-600"
-                        : "text-blue-600"
-                    }
-                  `}
-                  >
-                    {user?.role_id === 3
-                      ? "Administrator"
-                      : user?.role_id === 2
-                      ? "Guru"
-                      : "Siswa"}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* Enhanced Header with scroll behavior */}
+        <EnhancedHeader user={user} onMenuClick={toggleSidebar} />
 
         {/* Page content */}
         <main className="flex-1 p-6 overflow-auto">{children}</main>

@@ -19,7 +19,7 @@ import {
   Archive,
   Download,
   Trash2,
-  CloudUpload
+  UploadCloud
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -30,6 +30,7 @@ interface FileSubmissionFormProps {
   assignment: Assignment;
   existingSubmission?: Submission;
   onSubmit: (data: FormData) => void;
+  onSaveDraft: (data: FormData) => void;
   isSubmitting: boolean;
 }
 
@@ -319,7 +320,7 @@ export const FileSubmissionForm: React.FC<FileSubmissionFormProps> = ({
                   className="space-y-4"
                 >
                   <div className="flex items-center justify-center mb-4">
-                    <CloudUpload className={cn(
+                    <UploadCloud className={cn(
                       "h-12 w-12 transition-colors",
                       isDragActive ? "text-blue-500" : "text-gray-400"
                     )} />

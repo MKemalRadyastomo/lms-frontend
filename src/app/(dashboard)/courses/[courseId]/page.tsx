@@ -28,22 +28,49 @@ import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
 const CourseDetailPage = () => {
-  const params = useParams();
+  const params = useParams<{ courseId: string }>();
   const { user } = useAuth();
-  const courseId = Number(params.courseId);
+  
+  // Parse courseId with proper validation
+  const courseId = React.useMemo(() => {
+    const id = parseInt(params.courseId, 10);
+    return isNaN(id) ? null : id;
+  }, [params.courseId]);
+  
   const userRole = user ? (user.role_id === 1 ? 'student' : user.role_id === 2 ? 'teacher' : 'admin') : 'student';
 
   const { data: course, isLoading, isError, error } = useQuery({
     queryKey: ['course', courseId],
-    queryFn: () => apiClient.getCourseById(courseId),
+    queryFn: () => apiClient.getCourseById(courseId!),
+    enabled: courseId !== null,
   });
 
   // Fetch course assignments for statistics
   const { data: assignments } = useQuery({
     queryKey: ['assignments', courseId],
-    queryFn: () => apiClient.get(`/courses/${courseId}/assignments`),
-    enabled: !!course,
+    queryFn: () => apiClient.getCourseAssignments(courseId!),
+    enabled: !!course && courseId !== null,
   });
+
+  // Fetch course statistics
+  const { data: courseStats, isLoading: isStatsLoading } = useQuery({
+    queryKey: ['courseStats', courseId],
+    queryFn: () => apiClient.getCourseStatistics(courseId!),
+    enabled: !!course && courseId !== null,
+  });
+
+  // Handle invalid courseId
+  if (courseId === null) {
+    return (
+      <div className="container mx-auto py-8">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>ID Kursus Tidak Valid</AlertTitle>
+          <AlertDescription>ID kursus yang diberikan tidak valid. Silakan periksa URL dan coba lagi.</AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -78,10 +105,10 @@ const CourseDetailPage = () => {
     );
   }
 
-  const assignmentCount = assignments?.data?.data?.length || 0;
-  const studentCount = 0; // Will be fetched when endpoint is available
-  const completedAssignments = 0; // TODO: Calculate from submissions
-  const averageGrade = 0; // TODO: Calculate from grades
+  const assignmentCount = assignments?.data?.length || 0;
+  const studentCount = courseStats?.studentCount || 0;
+  const completedAssignments = courseStats?.completedAssignments || 0;
+  const averageGrade = courseStats?.averageGrade || 0;
 
   const quickActions = [
     {
@@ -297,7 +324,7 @@ const CourseDetailPage = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {assignments?.data?.data?.slice(0, 5).map((assignment: any, index: number) => (
+                {assignments?.data?.slice(0, 5).map((assignment: any, index: number) => (
                   <div key={assignment.id} className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
                     <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
                       <BookOpen className="h-4 w-4" />

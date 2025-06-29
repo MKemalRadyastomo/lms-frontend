@@ -29,17 +29,27 @@ const SubmitAssignmentPage = () => {
   const mutation = useMutation({
     mutationFn: (submissionData: any) => {
       if (assignment?.type === 'essay') {
-        return submitEssay(assignmentId, submissionData);
+        return submitEssay(assignmentId, { answer_text: submissionData, draft: false });
       } else if (assignment?.type === 'file_upload') {
-        const formData = new FormData();
-        formData.append('submitted_file', submissionData.submitted_file);
-        return submitFile(assignmentId, formData);
-      } else if (assignment?.type === 'quiz') {
+        return submitFile(assignmentId, submissionData);
         return submitQuiz(assignmentId, submissionData);
       }
       throw new Error('Invalid assignment type');
     },
   });
+
+  const handleSaveDraft = async (data: any) => {
+    if (assignment?.type === 'essay') {
+      await submitEssay(assignmentId, { answer_text: data.answer_text, draft: true });
+    } else if (assignment?.type === 'file_upload') {
+      const formData = new FormData();
+      formData.append('submitted_file', data.submitted_file);
+      formData.append('draft', 'true');
+      await submitFile(assignmentId, formData);
+    } else if (assignment?.type === 'quiz') {
+      await submitQuiz(assignmentId, { answers: data.answers, draft: true });
+    }
+  };
 
   if (isLoading || isUserLoading || !user) {
     return <LoadingSpinner />;
@@ -62,22 +72,29 @@ const SubmitAssignmentPage = () => {
       )}
 
       {assignment.type === 'essay' && (
-        <EssaySubmissionForm onSubmit={mutation.mutate} isSubmitting={mutation.isPending} />
+        <EssaySubmissionForm 
+          assignment={assignment}
+          onSubmit={(data) => mutation.mutate(data.answer_text)}
+          onSaveDraft={(data) => handleSaveDraft(data)}
+          isSubmitting={mutation.isPending} 
+        />
       )}
 
       {assignment.type === 'file_upload' && (
         <FileSubmissionForm
-          onSubmit={mutation.mutate}
+          assignment={assignment}
+          onSubmit={(data) => mutation.mutate(data)}
+          onSaveDraft={(data) => handleSaveDraft(data)}
           isSubmitting={mutation.isPending}
-          allowedFileTypes={assignment.allowed_file_types}
-          maxFileSizeMb={assignment.max_file_size_mb}
         />
       )}
 
       {assignment.type === 'quiz' && assignment.quiz_questions_json && (
         <QuizSubmissionForm
+          assignment={assignment}
           questions={assignment.quiz_questions_json}
-          onSubmit={mutation.mutate}
+          onSubmit={(data) => mutation.mutate(data)}
+          onSaveDraft={(data) => handleSaveDraft(data)}
           isSubmitting={mutation.isPending}
         />
       )}

@@ -302,7 +302,7 @@ export const AssignmentForm: React.FC<AssignmentFormProps> = ({
                                         type="radio"
                                         id={type.value}
                                         value={type.value}
-                                        checked={isSelected}
+                                        checked={field.value === type.value}
                                         onChange={() => field.onChange(type.value)}
                                         className="sr-only"
                                       />

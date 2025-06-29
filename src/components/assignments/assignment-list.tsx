@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getAssignmentsByCourse } from '@/lib/assignments-api';
 import { getStudentSubmission } from '@/lib/submissions-api';
-import { Assignment, PaginatedResponse, Submission } from '@/types';
+import { Assignment, PaginatedResponse, Submission, SubmissionDetail } from '@/types';
 import { AssignmentCard } from './assignment-card';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -69,7 +69,7 @@ export const AssignmentList: React.FC<AssignmentListProps> = ({ courseId, userRo
       });
       
       const submissionResults = await Promise.all(submissionPromises);
-      return submissionResults.reduce((acc, curr) => ({ ...acc, ...curr }), {});
+      return submissionResults.reduce((acc, curr) => ({ ...acc, ...curr }), {} as Record<number, SubmissionDetail | null>);
     },
     enabled: userRole === 'student' && !!assignments?.data,
   });
@@ -134,10 +134,10 @@ export const AssignmentList: React.FC<AssignmentListProps> = ({ courseId, userRo
     return filtered;
   }, [assignments?.data, searchTerm, typeFilter, statusFilter, sortOption, submissions]);
 
-  const getFilterCounts = () => {
+  const getFilterCounts = (): Record<string, number> => {
     if (!assignments?.data) return {};
     
-    const counts = {
+    const counts: Record<string, number> = {
       all: assignments.data.length,
       essay: 0,
       file_upload: 0,
@@ -145,7 +145,8 @@ export const AssignmentList: React.FC<AssignmentListProps> = ({ courseId, userRo
       pending: 0,
       submitted: 0,
       graded: 0,
-      overdue: 0
+      overdue: 0,
+      draft: 0
     };
 
     assignments.data.forEach(assignment => {
@@ -153,6 +154,7 @@ export const AssignmentList: React.FC<AssignmentListProps> = ({ courseId, userRo
       
       const status = getSubmissionStatus(assignment);
       if (status === 'not_started') counts.pending++;
+      else if (status === 'draft') counts.draft++;
       else counts[status]++;
     });
 

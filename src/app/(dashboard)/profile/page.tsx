@@ -1,383 +1,342 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Camera, Mail, Calendar, Shield, Edit2, Save, X } from 'lucide-react'
-
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { apiClient } from '@/lib/api'
-import { AuthManager } from '@/lib/auth'
-import { User } from '@/types'
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
+import { AuthManager } from '@/lib/auth';
+import { profileApi } from '@/lib/api/profile';
+import { ProfileHeader } from '@/components/profile/ProfileHeader';
+import { ProfileInformation } from '@/components/profile/ProfileInformation';
+import { ProfileStatsComponent } from '@/components/profile/ProfileStats';
+import { ProfileEditModal } from '@/components/profile/ProfileEditModal';
+import { ProfilePictureModal } from '@/components/profile/ProfilePictureModal';
+import { PasswordChangeModal } from '@/components/profile/PasswordChangeModal';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Settings, Shield, RefreshCw } from 'lucide-react';
+import { User } from '@/types';
+import { ProfileStats } from '@/types/profile';
 
 export default function ProfilePage() {
-  const [isEditing, setIsEditing] = useState(false)
-  const [formData, setFormData] = useState({
-    username: '',
-    email: '',
-    first_name: '',
-    last_name: '',
-  })
-  const [profileImage, setProfileImage] = useState<File | null>(null)
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  // State management
+  const [user, setUser] = useState<User | null>(null);
+  const [profileStats, setProfileStats] = useState<ProfileStats | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isStatsLoading, setIsStatsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
-  const queryClient = useQueryClient()
-  const currentUser = AuthManager.getUserData()
-  const userId = AuthManager.getUserId()
+  // Modal states
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isPictureModalOpen, setIsPictureModalOpen] = useState(false);
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  
+  const router = useRouter();
 
-  // Fetch user data
-  const { data: user, isLoading } = useQuery({
-    queryKey: ['user', userId],
-    queryFn: () => apiClient.getUserById(userId!),
-    enabled: !!userId,
-    initialData: currentUser,
-  })
-
-  // Update form data when user data loads
+  // Load profile data
   useEffect(() => {
+    const loadProfileData = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        
+        const currentUser = AuthManager.getUserData();
+        if (!currentUser) {
+          router.push('/login');
+          return;
+        }
+
+        setUser(currentUser);
+        
+        // Load user stats separately to avoid blocking the main UI
+        setIsStatsLoading(true);
+        try {
+          const stats = await profileApi.getUserStats(currentUser.id.toString());
+          setProfileStats(stats);
+        } catch (statsError) {
+          console.warn('Failed to load user stats:', statsError);
+          // Set default stats if endpoint not available
+          setProfileStats({
+            coursesEnrolled: 0,
+            assignmentsCompleted: 0,
+            assignmentsPending: 0,
+            totalSubmissions: 0,
+            averageGrade: null,
+            lastLoginAt: null,
+            accountCreatedAt: currentUser.created_at,
+            completionRate: 0,
+          });
+        } finally {
+          setIsStatsLoading(false);
+        }
+        
+      } catch (error) {
+        console.error('Error loading profile:', error);
+        setError('Gagal memuat data profil');
+        toast.error('Gagal memuat data profil');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadProfileData();
+  }, [router]);
+
+  // Handle profile update success
+  const handleProfileUpdateSuccess = (updatedUser: User) => {
+    setUser(updatedUser);
+    AuthManager.updateUserData(updatedUser);
+    toast.success('Profil berhasil diperbarui');
+  };
+
+  // Handle picture update success
+  const handlePictureUpdateSuccess = (pictureUrl: string) => {
     if (user) {
-      setFormData({
-        username: user.username || '',
-        email: user.email || '',
-        first_name: user.first_name || '',
-        last_name: user.last_name || '',
-      })
-      setPreviewUrl(user.profile_picture_url || null)
+      const updatedUser = { ...user, profile_picture_url: pictureUrl };
+      setUser(updatedUser);
+      AuthManager.updateUserData(updatedUser);
     }
-  }, [user])
+    toast.success('Foto profil berhasil diperbarui');
+  };
 
-  // Update user mutation
-  const updateUserMutation = useMutation({
-    mutationFn: async (data: typeof formData) => {
-      if (!user) throw new Error('User not found')
-      
-      // Update user data
-      const updatedUser = await apiClient.updateUser(user.id, data)
-      
-      // Upload profile image if selected
-      if (profileImage) {
-        await apiClient.uploadProfilePicture(user.id, profileImage)
-        // Fetch updated user data to get new profile picture URL
-        return apiClient.getUserById(user.id)
-      }
-      
-      return updatedUser
-    },
-    onSuccess: (updatedUser) => {
-      queryClient.setQueryData(['user', userId], updatedUser)
-      AuthManager.setUserData(updatedUser)
-      setIsEditing(false)
-      setProfileImage(null)
-    },
-    onError: (error: any) => {
-      console.error('Failed to update profile:', error)
-    },
-  })
-
-  const handleInputChange = (field: keyof typeof formData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
-  }
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      // Validate file type and size
-      if (!file.type.startsWith('image/')) {
-        alert('Please select a valid image file')
-        return
-      }
-      
-      if (file.size > 2 * 1024 * 1024) { // 2MB limit
-        alert('Image file must be less than 2MB')
-        return
-      }
-      
-      setProfileImage(file)
-      
-      // Create preview URL
-      const reader = new FileReader()
-      reader.onload = () => {
-        setPreviewUrl(reader.result as string)
-      }
-      reader.readAsDataURL(file)
+  // Refresh profile data
+  const refreshProfile = async () => {
+    if (!user) return;
+    
+    try {
+      setIsStatsLoading(true);
+      const stats = await profileApi.getUserStats(user.id.toString());
+      setProfileStats(stats);
+      toast.success('Data profil berhasil diperbarui');
+    } catch (error) {
+      console.error('Error refreshing profile:', error);
+      toast.error('Gagal memperbarui data profil');
+    } finally {
+      setIsStatsLoading(false);
     }
-  }
+  };
 
-  const handleSubmit = () => {
-    updateUserMutation.mutate(formData)
-  }
-
-  const handleCancel = () => {
-    if (user) {
-      setFormData({
-        username: user.username || '',
-        email: user.email || '',
-        first_name: user.first_name || '',
-        last_name: user.last_name || '',
-      })
-      setPreviewUrl(user.profile_picture_url || null)
-      setProfileImage(null)
-    }
-    setIsEditing(false)
-  }
-
-  const getRoleName = (roleId: number) => {
-    switch (roleId) {
-      case 3:
-        return 'Administrator'
-      case 2:
-        return 'Instructor'
-      case 1:
-      default:
-        return 'Student'
-    }
-  }
-
-  const getRoleBadgeColor = (roleId: number) => {
-    switch (roleId) {
-      case 3:
-        return 'bg-purple-100 text-purple-800'
-      case 2:
-        return 'bg-green-100 text-green-800'
-      case 1:
-      default:
-        return 'bg-blue-100 text-blue-800'
-    }
-  }
-
-  if (isLoading || !user) {
+  // Loading state
+  if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-6xl mx-auto p-6 space-y-8">
+          {/* Page Header Skeleton */}
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div>
+              <Skeleton className="h-8 w-48 mb-2" />
+              <Skeleton className="h-4 w-96" />
+            </div>
+            <div className="flex gap-2">
+              <Skeleton className="h-10 w-32" />
+              <Skeleton className="h-10 w-32" />
+            </div>
+          </div>
+
+          {/* Profile Header Skeleton */}
+          <Card className="p-8">
+            <div className="flex flex-col lg:flex-row lg:items-start gap-6">
+              <Skeleton className="h-32 w-32 rounded-full" />
+              <div className="flex-1 space-y-4">
+                <Skeleton className="h-8 w-64" />
+                <Skeleton className="h-4 w-32" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
+                  <div className="space-y-3">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-full" />
+                  </div>
+                  <div className="space-y-3">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-full" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          {/* Content Grid Skeleton */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2 space-y-6">
+              {[1, 2, 3].map((i) => (
+                <Card key={i} className="p-6">
+                  <Skeleton className="h-6 w-48 mb-4" />
+                  <div className="space-y-3">
+                    {[1, 2, 3, 4].map((j) => (
+                      <div key={j} className="flex justify-between">
+                        <Skeleton className="h-4 w-32" />
+                        <Skeleton className="h-4 w-24" />
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              ))}
+            </div>
+            <div className="lg:col-span-1">
+              <div className="grid grid-cols-2 lg:grid-cols-1 gap-4">
+                {[1, 2, 3, 4].map((i) => (
+                  <Card key={i} className="p-6">
+                    <Skeleton className="h-12 w-12 rounded-full mb-3" />
+                    <Skeleton className="h-8 w-16 mb-2" />
+                    <Skeleton className="h-4 w-24" />
+                  </Card>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-    )
+    );
+  }
+
+  // Error state
+  if (error || !user) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Card className="p-8 text-center max-w-md">
+          <CardContent className="space-y-4">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto">
+              <Shield className="h-8 w-8 text-red-600" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900">
+              Gagal Memuat Profil
+            </h3>
+            <p className="text-gray-600">
+              {error || 'Terjadi kesalahan saat memuat data profil Anda.'}
+            </p>
+            <div className="flex gap-2 justify-center">
+              <Button onClick={() => window.location.reload()} variant="outline">
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Coba Lagi
+              </Button>
+              <Button onClick={() => router.push('/dashboard')}>
+                Kembali ke Dashboard
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Profile Settings</h1>
-          <p className="text-gray-600">Manage your account information and preferences</p>
-        </div>
-        {!isEditing && (
-          <Button onClick={() => setIsEditing(true)}>
-            <Edit2 className="mr-2 h-4 w-4" />
-            Edit Profile
-          </Button>
-        )}
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Profile Card */}
-        <Card className="lg:col-span-1">
-          <CardHeader className="text-center">
-            <div className="relative mx-auto">
-              <div className="w-32 h-32 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full overflow-hidden flex items-center justify-center mx-auto">
-                {previewUrl ? (
-                  <img 
-                    src={previewUrl} 
-                    alt="Profile" 
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="text-white text-4xl font-bold">
-                    {user.first_name?.[0] || user.username?.[0]?.toUpperCase()}
-                  </div>
-                )}
-              </div>
-              {isEditing && (
-                <div className="absolute bottom-0 right-0">
-                  <input
-                    id="profile-image-input"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    className="hidden"
-                  />
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="rounded-full w-10 h-10 p-0"
-                    onClick={() => document.getElementById('profile-image-input')?.click()}
-                  >
-                    <Camera className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
-            </div>
-            <CardTitle className="mt-4">
-              {user.first_name && user.last_name
-                ? `${user.first_name} ${user.last_name}`
-                : user.username
-              }
-            </CardTitle>
-            <CardDescription>
-              <span className={`
-                inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
-                ${getRoleBadgeColor(user.role_id)}
-              `}>
-                <Shield className="mr-1 h-3 w-3" />
-                {getRoleName(user.role_id)}
-              </span>
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center space-x-3 text-sm text-gray-600">
-              <Mail className="h-4 w-4" />
-              <span>{user.email}</span>
-            </div>
-            <div className="flex items-center space-x-3 text-sm text-gray-600">
-              <Calendar className="h-4 w-4" />
-              <span>Joined {new Date(user.created_at).toLocaleDateString()}</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Profile Form */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Personal Information</CardTitle>
-            <CardDescription>
-              Update your personal details and contact information
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="first_name">First Name</Label>
-                {isEditing ? (
-                  <Input
-                    id="first_name"
-                    value={formData.first_name}
-                    onChange={(e) => handleInputChange('first_name', e.target.value)}
-                    placeholder="Enter your first name"
-                  />
-                ) : (
-                  <div className="px-3 py-2 bg-gray-50 rounded-md text-gray-900">
-                    {user.first_name || 'Not provided'}
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="last_name">Last Name</Label>
-                {isEditing ? (
-                  <Input
-                    id="last_name"
-                    value={formData.last_name}
-                    onChange={(e) => handleInputChange('last_name', e.target.value)}
-                    placeholder="Enter your last name"
-                  />
-                ) : (
-                  <div className="px-3 py-2 bg-gray-50 rounded-md text-gray-900">
-                    {user.last_name || 'Not provided'}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
-              {isEditing ? (
-                <Input
-                  id="username"
-                  value={formData.username}
-                  onChange={(e) => handleInputChange('username', e.target.value)}
-                  placeholder="Enter your username"
-                />
-              ) : (
-                <div className="px-3 py-2 bg-gray-50 rounded-md text-gray-900">
-                  {user.username}
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
-              {isEditing ? (
-                <Input
-                  id="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
-                  placeholder="Enter your email address"
-                />
-              ) : (
-                <div className="px-3 py-2 bg-gray-50 rounded-md text-gray-900">
-                  {user.email}
-                </div>
-              )}
-            </div>
-
-            {isEditing && (
-              <div className="flex items-center justify-end space-x-4 pt-4 border-t">
-                <Button
-                  variant="outline"
-                  onClick={handleCancel}
-                  disabled={updateUserMutation.isPending}
-                >
-                  <X className="mr-2 h-4 w-4" />
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleSubmit}
-                  disabled={updateUserMutation.isPending}
-                >
-                  <Save className="mr-2 h-4 w-4" />
-                  {updateUserMutation.isPending ? 'Saving...' : 'Save Changes'}
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Additional Settings */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Account Settings</CardTitle>
-          <CardDescription>
-            Additional settings and preferences
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between py-3 border-b">
-              <div>
-                <h4 className="font-medium">Change Password</h4>
-                <p className="text-sm text-gray-600">Update your account password</p>
-              </div>
-              <Button variant="outline" size="sm">
-                Update Password
-              </Button>
-            </div>
-            
-            <div className="flex items-center justify-between py-3 border-b">
-              <div>
-                <h4 className="font-medium">Email Notifications</h4>
-                <p className="text-sm text-gray-600">Manage your notification preferences</p>
-              </div>
-              <Button variant="outline" size="sm">
-                Configure
-              </Button>
-            </div>
-            
-            <div className="flex items-center justify-between py-3">
-              <div>
-                <h4 className="font-medium">Privacy Settings</h4>
-                <p className="text-sm text-gray-600">Control your profile visibility</p>
-              </div>
-              <Button variant="outline" size="sm">
-                Manage
-              </Button>
-            </div>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-6xl mx-auto p-6 space-y-8">
+        {/* Page Header */}
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Profil Saya</h1>
+            <p className="text-gray-600 mt-1">
+              Kelola informasi profil dan pengaturan akun Anda
+            </p>
           </div>
-        </CardContent>
-      </Card>
+          
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              onClick={refreshProfile}
+              disabled={isStatsLoading}
+              className="flex items-center"
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${isStatsLoading ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+            
+            <Button
+              variant="outline"
+              onClick={() => setIsPasswordModalOpen(true)}
+              className="flex items-center"
+            >
+              <Shield className="h-4 w-4 mr-2" />
+              Ubah Password
+            </Button>
+            
+            <Button
+              variant="outline"
+              onClick={() => router.push('/profile/settings')}
+              className="flex items-center"
+            >
+              <Settings className="h-4 w-4 mr-2" />
+              Pengaturan
+            </Button>
+          </div>
+        </div>
+
+        {/* Profile Header */}
+        <ProfileHeader
+          user={user}
+          onEditProfile={() => setIsEditModalOpen(true)}
+          onEditPicture={() => setIsPictureModalOpen(true)}
+          isOwnProfile={true}
+        />
+
+        {/* Profile Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left Column: Profile Information */}
+          <div className="lg:col-span-2">
+            <ProfileInformation user={user} />
+          </div>
+
+          {/* Right Column: Statistics */}
+          <div className="lg:col-span-1">
+            {isStatsLoading ? (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 lg:grid-cols-1 gap-4">
+                  {[1, 2, 3, 4].map((i) => (
+                    <Card key={i} className="p-6">
+                      <div className="flex items-center space-x-3">
+                        <Skeleton className="h-12 w-12 rounded-full" />
+                        <div>
+                          <Skeleton className="h-6 w-16 mb-2" />
+                          <Skeleton className="h-4 w-24" />
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            ) : profileStats ? (
+              <ProfileStatsComponent 
+                stats={profileStats} 
+                userRole={user.role_id} 
+              />
+            ) : (
+              <Card className="p-6 text-center">
+                <p className="text-gray-500">Statistik tidak tersedia</p>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={refreshProfile}
+                  className="mt-3"
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Coba Lagi
+                </Button>
+              </Card>
+            )}
+          </div>
+        </div>
+
+        {/* Modals */}
+        <ProfileEditModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          user={user}
+          onUpdateSuccess={handleProfileUpdateSuccess}
+        />
+
+        <ProfilePictureModal
+          isOpen={isPictureModalOpen}
+          onClose={() => setIsPictureModalOpen(false)}
+          user={user}
+          onUpdateSuccess={handlePictureUpdateSuccess}
+        />
+
+        <PasswordChangeModal
+          isOpen={isPasswordModalOpen}
+          onClose={() => setIsPasswordModalOpen(false)}
+          userId={user.id.toString()}
+        />
+      </div>
     </div>
-  )
+  );
 }

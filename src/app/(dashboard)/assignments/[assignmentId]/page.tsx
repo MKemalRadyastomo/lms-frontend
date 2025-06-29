@@ -291,6 +291,7 @@ const AssignmentDetailPage = () => {
             assignment={assignment}
             existingSubmission={submission}
             onSubmit={(data) => fileMutation.mutate(data)}
+            onSaveDraft={(data) => fileMutation.mutate(data)}
             isSubmitting={fileMutation.isPending}
           />
         );
@@ -300,6 +301,7 @@ const AssignmentDetailPage = () => {
           <QuizSubmissionForm
             assignment={assignment}
             existingSubmission={submission}
+            questions={assignment.quiz_questions_json || []}
             onSubmit={(data) => quizMutation.mutate(data)}
             onSaveDraft={(data) => quizMutation.mutate(data)}
             isSubmitting={quizMutation.isPending}
@@ -499,7 +501,7 @@ const AssignmentDetailPage = () => {
               <CardContent>
                 {isSubmissionLoading ? (
                   <div className="flex items-center gap-2">
-                    <LoadingSpinner size="sm" />
+                    <LoadingSpinner size={16} />
                     <span className="text-sm">Memuat status...</span>
                   </div>
                 ) : submission ? (

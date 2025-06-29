@@ -41,9 +41,7 @@ const CreateAssignmentPage = () => {
         variant: 'default',
       });
       // Navigate after short delay to show toast
-      setTimeout(() => {
-        router.push(`/courses/${courseId}/assignments`);
-      }, 1000);
+      // router.push(`/courses/${courseId}/assignments`); // Removed automatic redirect
     },
     onError: (error: Error) => {
       console.error('Assignment creation error:', error);

@@ -46,6 +46,7 @@ interface QuizSubmissionFormProps {
   onSaveDraft: (data: QuizSubmissionData) => void;
   isSubmitting: boolean;
   isDraft?: boolean;
+  questions: QuizQuestion[];
 }
 
 export const QuizSubmissionForm: React.FC<QuizSubmissionFormProps> = ({
@@ -70,7 +71,7 @@ export const QuizSubmissionForm: React.FC<QuizSubmissionFormProps> = ({
       answers: questions.map(q => ({
         question_id: q.id,
         answer: existingSubmission?.quiz_answers_json 
-          ? JSON.parse(existingSubmission.quiz_answers_json).find((a: QuizAnswer) => a.question_id === q.id)?.answer || ''
+          ? existingSubmission.quiz_answers_json.find((a: QuizAnswer) => a.question_id === q.id)?.answer || ''
           : ''
       }))
     }

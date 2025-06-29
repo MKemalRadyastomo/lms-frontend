@@ -253,6 +253,13 @@ export interface DashboardStats {
   completionRate: number
 }
 
+export interface CourseStatistics {
+  courseId: number;
+  studentCount: number;
+  completedAssignments: number;
+  averageGrade: number;
+}
+
 export interface StudentDashboard {
   enrolledCourses: Course[]
   pendingAssignments: Assignment[]

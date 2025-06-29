@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { useStatusColors, getGradeColor, getAssignmentStatusColor } from '@/hooks/useThemeColors';
 
 interface AssignmentCardProps {
   assignment: Assignment & {
@@ -37,47 +38,47 @@ const typeConfig = {
   essay: {
     icon: BookOpen,
     label: 'Esai',
-    color: 'bg-blue-500/10 text-blue-700 border-blue-200',
-    iconColor: 'text-blue-600'
+    color: 'bg-primary/10 text-primary border-primary/20',
+    iconColor: 'text-primary'
   },
   file_upload: {
     icon: Upload,
     label: 'Upload File',
-    color: 'bg-green-500/10 text-green-700 border-green-200',
-    iconColor: 'text-green-600'
+    color: 'bg-accent/10 text-accent-foreground border-accent/20',
+    iconColor: 'text-accent'
   },
   quiz: {
     icon: FileQuestion,
     label: 'Kuis',
-    color: 'bg-purple-500/10 text-purple-700 border-purple-200',
-    iconColor: 'text-purple-600'
+    color: 'bg-secondary/10 text-secondary-foreground border-secondary/20',
+    iconColor: 'text-secondary-foreground'
   }
 } as const;
 
 const statusConfig = {
   not_started: {
     label: 'Belum Dimulai',
-    color: 'bg-gray-500/10 text-gray-700 border-gray-200',
+    color: 'bg-muted/50 text-muted-foreground border-muted',
     icon: Timer
   },
   draft: {
     label: 'Draf',
-    color: 'bg-yellow-500/10 text-yellow-700 border-yellow-200',
+    color: 'bg-amber-500/10 text-amber-700 border-amber-200 dark:bg-amber-400/10 dark:text-amber-400 dark:border-amber-400/20',
     icon: Clock
   },
   submitted: {
     label: 'Dikirim',
-    color: 'bg-blue-500/10 text-blue-700 border-blue-200',
+    color: 'bg-primary/10 text-primary border-primary/20',
     icon: CheckCircle2
   },
   graded: {
     label: 'Dinilai',
-    color: 'bg-green-500/10 text-green-700 border-green-200',
+    color: 'bg-accent/10 text-accent-foreground border-accent/20',
     icon: GraduationCap
   },
   overdue: {
     label: 'Terlambat',
-    color: 'bg-red-500/10 text-red-700 border-red-200',
+    color: 'bg-destructive/10 text-destructive border-destructive/20',
     icon: AlertTriangle
   }
 } as const;
@@ -89,6 +90,8 @@ export const AssignmentCard: React.FC<AssignmentCardProps> = ({
   grade,
   showCourseInfo = false
 }) => {
+  const { assignment: assignmentColors } = useStatusColors();
+  
   const typeInfo = typeConfig[assignment.type as keyof typeof typeConfig];
   const statusInfo = statusConfig[submissionStatus];
   const TypeIcon = typeInfo.icon;
@@ -102,10 +105,10 @@ export const AssignmentCard: React.FC<AssignmentCardProps> = ({
   const ActualStatusIcon = actualStatusInfo.icon;
 
   const getUrgencyColor = () => {
-    if (isOverdue || actualStatus === 'overdue') return 'border-l-red-500 shadow-red-100';
-    if (daysUntilDue <= 1) return 'border-l-orange-500 shadow-orange-100';
-    if (daysUntilDue <= 3) return 'border-l-yellow-500 shadow-yellow-100';
-    return 'border-l-blue-500 shadow-blue-100';
+    if (isOverdue || actualStatus === 'overdue') return 'border-l-destructive shadow-destructive/20';
+    if (daysUntilDue <= 1) return 'border-l-amber-500 shadow-amber-500/20';
+    if (daysUntilDue <= 3) return 'border-l-yellow-500 shadow-yellow-500/20';
+    return 'border-l-primary shadow-primary/20';
   };
 
   const cardVariants = {
@@ -131,7 +134,7 @@ export const AssignmentCard: React.FC<AssignmentCardProps> = ({
     >
       <Card className={cn(
         "relative border-l-4 transition-all duration-300 cursor-pointer",
-        "hover:shadow-lg hover:shadow-blue-100/50",
+        "hover:shadow-lg hover:shadow-primary/10",
         getUrgencyColor()
       )}>
         <CardHeader className="pb-3">
@@ -159,16 +162,16 @@ export const AssignmentCard: React.FC<AssignmentCardProps> = ({
                 </Badge>
               </div>
               
-              <h3 className="font-semibold text-lg leading-tight text-gray-900 group-hover:text-blue-700 transition-colors duration-200 line-clamp-2">
+              <h3 className="font-semibold text-lg leading-tight text-foreground group-hover:text-primary transition-colors duration-200 line-clamp-2">
                 {assignment.title}
               </h3>
               
               {showCourseInfo && assignment.course_name && (
                 <div className="flex items-center gap-2 mt-1">
-                  <GraduationCap className="h-3 w-3 text-gray-500" />
-                  <span className="text-sm text-gray-600 font-medium">{assignment.course_name}</span>
+                  <GraduationCap className="h-3 w-3 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground font-medium">{assignment.course_name}</span>
                   {assignment.course_code && (
-                    <Badge variant="outline" className="text-xs text-gray-500 border-gray-300">
+                    <Badge variant="outline" className="text-xs text-muted-foreground border-border">
                       {assignment.course_code}
                     </Badge>
                   )}
@@ -176,7 +179,7 @@ export const AssignmentCard: React.FC<AssignmentCardProps> = ({
               )}
               
               {assignment.description && (
-                <p className="text-sm text-gray-600 mt-2 line-clamp-2">
+                <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
                   {assignment.description}
                 </p>
               )}
@@ -186,13 +189,13 @@ export const AssignmentCard: React.FC<AssignmentCardProps> = ({
               <div className="flex flex-col items-center ml-4">
                 <div className={cn(
                   "text-2xl font-bold px-3 py-1 rounded-lg",
-                  grade >= 80 ? "text-green-700 bg-green-50" :
-                  grade >= 70 ? "text-yellow-700 bg-yellow-50" :
-                  "text-red-700 bg-red-50"
+                  grade >= 80 ? "text-accent-foreground bg-accent/10" :
+                  grade >= 70 ? "text-amber-700 bg-amber-50 dark:text-amber-400 dark:bg-amber-400/10" :
+                  "text-destructive bg-destructive/10"
                 )}>
                   {grade}
                 </div>
-                <span className="text-xs text-gray-500 mt-1">dari {assignment.max_score}</span>
+                <span className="text-xs text-muted-foreground mt-1">dari {assignment.max_score}</span>
               </div>
             )}
           </div>
@@ -200,32 +203,32 @@ export const AssignmentCard: React.FC<AssignmentCardProps> = ({
         
         <CardContent className="pt-0 pb-4">
           <div className="grid grid-cols-2 gap-4 text-sm">
-            <div className="flex items-center gap-2 text-gray-600">
+            <div className="flex items-center gap-2 text-muted-foreground">
               <Calendar className="h-4 w-4" />
               <div>
-                <div className="font-medium text-gray-900">Batas Waktu</div>
+                <div className="font-medium text-foreground">Batas Waktu</div>
                 <div className={cn(
                   "text-sm",
-                  isOverdue ? "text-red-600 font-medium" : "text-gray-600"
+                  isOverdue ? "text-destructive font-medium" : "text-muted-foreground"
                 )}>
                   {format(new Date(assignment.due_date), 'dd MMM yyyy, HH:mm', { locale: id })}
                 </div>
               </div>
             </div>
             
-            <div className="flex items-center gap-2 text-gray-600">
+            <div className="flex items-center gap-2 text-muted-foreground">
               <GraduationCap className="h-4 w-4" />
               <div>
-                <div className="font-medium text-gray-900">Nilai Maksimal</div>
+                <div className="font-medium text-foreground">Nilai Maksimal</div>
                 <div className="text-sm">{assignment.max_score} poin</div>
               </div>
             </div>
           </div>
           
           {/* Time remaining indicator */}
-          <div className="mt-4 p-3 rounded-lg bg-gray-50">
+          <div className="mt-4 p-3 rounded-lg bg-muted/30">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-600">
+              <span className="text-muted-foreground">
                 {isOverdue 
                   ? `Terlambat ${Math.abs(daysUntilDue)} hari`
                   : daysUntilDue === 0 
@@ -237,10 +240,10 @@ export const AssignmentCard: React.FC<AssignmentCardProps> = ({
               </span>
               <Clock className={cn(
                 "h-4 w-4",
-                isOverdue ? "text-red-500" :
-                daysUntilDue <= 1 ? "text-orange-500" :
+                isOverdue ? "text-destructive" :
+                daysUntilDue <= 1 ? "text-amber-500" :
                 daysUntilDue <= 3 ? "text-yellow-500" :
-                "text-gray-400"
+                "text-muted-foreground"
               )} />
             </div>
           </div>
@@ -248,7 +251,7 @@ export const AssignmentCard: React.FC<AssignmentCardProps> = ({
         
         <CardFooter className="pt-0">
           <div className="flex items-center justify-between w-full">
-            <div className="text-xs text-gray-500">
+            <div className="text-xs text-muted-foreground">
               Dibuat {format(new Date(assignment.created_at), 'dd MMM yyyy', { locale: id })}
             </div>
             
@@ -275,7 +278,7 @@ export const AssignmentCard: React.FC<AssignmentCardProps> = ({
                       "text-xs font-medium",
                       actualStatus === 'submitted' || actualStatus === 'graded' 
                         ? "" 
-                        : "bg-blue-600 hover:bg-blue-700"
+                        : "bg-primary hover:bg-primary/90"
                     )}
                     variant={actualStatus === 'submitted' || actualStatus === 'graded' ? "outline" : "default"}
                   >
