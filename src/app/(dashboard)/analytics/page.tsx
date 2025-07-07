@@ -8,9 +8,10 @@ import { NavigationDebug } from '@/components/debug/NavigationDebug';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { BarChart3, TrendingUp, Users, BookOpen, Shield, AlertTriangle } from 'lucide-react';
+import { User } from '@/types';
 
 export default function AnalyticsPage() {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasAccess, setHasAccess] = useState(false);
   const router = useRouter();
