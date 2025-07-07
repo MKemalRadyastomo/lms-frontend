@@ -44,17 +44,15 @@ interface RecentActivity {
 
 export default function DashboardPage() {
   const [user, setUser] = useState<User | null>(null);
-  const currentUser = AuthManager.getUserData();
   const userId = AuthManager.getUserId();
 
   useEffect(() => {
+    // Get current user data inside useEffect to avoid dependency issues
+    const currentUser = AuthManager.getUserData();
     if (currentUser) {
       setUser(currentUser);
-    } /* else if (userData) {
-      setUser(userData)
-      AuthManager.setUserData(userData)
-    } */
-  }, [currentUser /*, userData*/]);
+    }
+  }, []); // Empty dependency array - only run once on mount
 
   const userRoleInfo = useMemo(() => {
     if (!user) return { isAdmin: false, isInstructor: false, isStudent: false };
@@ -73,7 +71,7 @@ export default function DashboardPage() {
   const { data: userData } = useQuery({
     queryKey: ["user", userId],
     queryFn: () => apiClient.getUserById(userId!),
-    enabled: !!userId && !currentUser,
+    enabled: !!userId && !user, // Changed from !currentUser to !user
   });
 
   const { data: dashboardStats, isLoading: isStatsLoading } = useQuery<{

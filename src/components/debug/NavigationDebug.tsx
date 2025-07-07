@@ -39,19 +39,17 @@ export function NavigationDebug() {
       // Test programmatic navigation
       router.push(href);
       
-      // Mark as successful (we can't easily detect if it actually worked)
-      setTestResults(prev => ({ ...prev, [href]: true }));
-      
-      // Wait a bit and check if pathname changed
+      // Wait longer for navigation to complete and check pathname
       setTimeout(() => {
-        if (window.location.pathname === href) {
+        const currentPath = window.location.pathname;
+        if (currentPath === href) {
           console.log(`✅ Navigation to ${href} successful`);
           setTestResults(prev => ({ ...prev, [href]: true }));
         } else {
-          console.log(`❌ Navigation to ${href} failed`);
+          console.log(`❌ Navigation to ${href} failed - Current path: ${currentPath}`);
           setTestResults(prev => ({ ...prev, [href]: false }));
         }
-      }, 100);
+      }, 1000); // Increased from 100ms to 1000ms
       
     } catch (error) {
       console.error(`Error navigating to ${href}:`, error);
@@ -59,11 +57,20 @@ export function NavigationDebug() {
     }
   };
 
-  const testAllNavigation = () => {
+  const testAllNavigation = async () => {
     console.log('🔍 Testing all navigation routes...');
-    navigationRoutes.forEach(route => {
-      setTimeout(() => testNavigation(route.href), 500);
-    });
+    
+    // Clear previous results
+    setTestResults({});
+    
+    // Test routes sequentially with delay between each
+    for (let i = 0; i < navigationRoutes.length; i++) {
+      const route = navigationRoutes[i];
+      setTimeout(() => {
+        console.log(`Testing route ${i + 1}/${navigationRoutes.length}: ${route.href}`);
+        testNavigation(route.href);
+      }, i * 1500); // 1.5 second delay between each test
+    }
   };
 
   return (
