@@ -1,100 +1,107 @@
-'use client'
+"use client";
 
-import { useEffect, useState, useMemo } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { 
-  BookOpen, 
-  Users, 
-  ClipboardList, 
-  TrendingUp,
-  Calendar,
-  Award,
-  Clock,
+import { useQuery } from "@tanstack/react-query";
+import {
   AlertCircle,
-  BarChart3
-} from 'lucide-react'
+  Award,
+  BookOpen,
+  Calendar,
+  ClipboardList,
+  Clock,
+  TrendingUp,
+  Users,
+} from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { NavigationTest } from '@/components/debug/navigation-test'
-import { NavigationDebug } from '@/components/debug/NavigationDebug'
-import { AnalyticsDashboard } from '@/components/analytics'
-import { apiClient } from '@/lib/api'
-import { AuthManager } from '@/lib/auth'
-import { User, Course, Assignment } from '@/types'
+import { NavigationDebug } from "@/components/debug/NavigationDebug";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { apiClient } from "@/lib/api";
+import { AuthManager } from "@/lib/auth";
+import { User } from "@/types";
 
 interface DashboardStats {
-  totalCourses: number
-  totalUsers: number
-  totalAssignments: number
-  recentActivity: number
+  totalCourses: number;
+  totalUsers: number;
+  totalAssignments: number;
+  recentActivity: number;
 }
 
 interface RecentActivity {
-  id: string
-  type: 'course' | 'assignment' | 'submission'
-  title: string
-  description: string
-  time: string
-  status?: 'pending' | 'completed' | 'overdue'
+  id: string;
+  type: "course" | "assignment" | "submission";
+  title: string;
+  description: string;
+  time: string;
+  status?: "pending" | "completed" | "overdue";
 }
 
 export default function DashboardPage() {
-  const [user, setUser] = useState<User | null>(null)
-  const currentUser = AuthManager.getUserData()
-  const userId = AuthManager.getUserId()
-
-  // Real data fetching
-  const { data: userData } = useQuery({
-    queryKey: ['user', userId],
-    queryFn: () => apiClient.getUserById(userId!),
-    enabled: !!userId && !currentUser,
-  })
-
-  const { data: dashboardStats, isLoading: isStatsLoading } = useQuery({
-    queryKey: ['dashboard-stats'],
-    queryFn: () => apiClient.getDashboardStats(),
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    cacheTime: 10 * 60 * 1000, // 10 minutes
-  })
-
-  const { data: userStats } = useQuery({
-    queryKey: ['user-stats', userId],
-    queryFn: () => apiClient.getUserStats(userId!),
-    enabled: !!userId && isStudent,
-    staleTime: 5 * 60 * 1000,
-  })
+  const [user, setUser] = useState<User | null>(null);
+  const currentUser = AuthManager.getUserData();
+  const userId = AuthManager.getUserId();
 
   useEffect(() => {
     if (currentUser) {
-      setUser(currentUser)
+      setUser(currentUser);
     } /* else if (userData) {
       setUser(userData)
       AuthManager.setUserData(userData)
     } */
-  }, [currentUser /*, userData*/])
+  }, [currentUser /*, userData*/]);
 
   const userRoleInfo = useMemo(() => {
     if (!user) return { isAdmin: false, isInstructor: false, isStudent: false };
-    
+
     const roleId = user.role_id;
     return {
       isAdmin: roleId === 3,
       isInstructor: roleId === 2,
-      isStudent: roleId === 1
+      isStudent: roleId === 1,
     };
   }, [user?.role_id]);
 
   const { isAdmin, isInstructor, isStudent } = userRoleInfo;
 
-  // Real stats from API
+  // Real data fetching
+  const { data: userData } = useQuery({
+    queryKey: ["user", userId],
+    queryFn: () => apiClient.getUserById(userId!),
+    enabled: !!userId && !currentUser,
+  });
+
+  const { data: dashboardStats, isLoading: isStatsLoading } = useQuery<{
+    totalUsers: number;
+    totalCourses: number;
+    totalAssignments: number;
+    recentActivity: number;
+  }>({
+    queryKey: ["dashboard-stats"],
+    queryFn: () => apiClient.getDashboardStats(),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes (was cacheTime in v4)
+  });
+
+  const { data: userStats } = useQuery({
+    queryKey: ["user-stats", userId],
+    queryFn: () => apiClient.getUserStats(userId!),
+    enabled: !!userId && isStudent,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Real stats from API with proper type safety
   const stats: DashboardStats = {
-    totalCourses: dashboardStats?.totalCourses || 0,
-    totalUsers: dashboardStats?.totalUsers || 0,
-    totalAssignments: dashboardStats?.totalAssignments || 0,
-    recentActivity: dashboardStats?.recentActivity || 0
-  }
+    totalCourses: dashboardStats?.totalCourses ?? 0,
+    totalUsers: dashboardStats?.totalUsers ?? 0,
+    totalAssignments: dashboardStats?.totalAssignments ?? 0,
+    recentActivity: dashboardStats?.recentActivity ?? 0,
+  };
 
   // Loading state for stats
   if (isStatsLoading) {
@@ -108,7 +115,10 @@ export default function DashboardPage() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="bg-white p-6 rounded-lg border animate-pulse">
+            <div
+              key={i}
+              className="bg-white p-6 rounded-lg border animate-pulse"
+            >
               <div className="h-12 bg-gray-200 rounded mb-4"></div>
               <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
               <div className="h-6 bg-gray-200 rounded w-1/3"></div>
@@ -116,7 +126,7 @@ export default function DashboardPage() {
           ))}
         </div>
       </div>
-    )
+    );
   }
 
   const recentActivity: RecentActivity[] = [];
@@ -126,14 +136,14 @@ export default function DashboardPage() {
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
       </div>
-    )
+    );
   }
 
   return (
     <div className="space-y-6">
       {/* Debug Navigation Test */}
-      {process.env.NODE_ENV === 'development' && <NavigationDebug />}
-      
+      {process.env.NODE_ENV === "development" && <NavigationDebug />}
+
       {/* Welcome Header */}
       <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-100">
         <div className="flex items-center justify-between">
@@ -165,9 +175,11 @@ export default function DashboardPage() {
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-600">
-                  {isStudent ? 'Enrolled Courses' : 'Total Courses'}
+                  {isStudent ? "Enrolled Courses" : "Total Courses"}
                 </p>
-                <p className="text-2xl font-bold text-gray-900">{stats.totalCourses}</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {stats.totalCourses}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -182,9 +194,11 @@ export default function DashboardPage() {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-600">
-                    {isAdmin ? 'Total Users' : 'Students'}
+                    {isAdmin ? "Total Users" : "Students"}
                   </p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.totalUsers}</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {stats.totalUsers}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -199,9 +213,11 @@ export default function DashboardPage() {
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-600">
-                  {isStudent ? 'Assignments' : 'Total Assignments'}
+                  {isStudent ? "Assignments" : "Total Assignments"}
                 </p>
-                <p className="text-2xl font-bold text-gray-900">{stats.totalAssignments}</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {stats.totalAssignments}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -215,10 +231,12 @@ export default function DashboardPage() {
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-600">
-                  {isStudent ? 'Completion Rate' : 'Activity'}
+                  {isStudent ? "Completion Rate" : "Activity"}
                 </p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {isStudent ? `${userStats?.completionRate || 0}%` : stats.recentActivity}
+                  {isStudent
+                    ? `${userStats?.completionRate || 0}%`
+                    : stats.recentActivity}
                 </p>
               </div>
             </div>
@@ -246,27 +264,45 @@ export default function DashboardPage() {
                   key={activity.id}
                   className="flex items-start space-x-4 p-4 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors duration-200"
                 >
-                  <div className={`
+                  <div
+                    className={`
                     w-2 h-2 rounded-full mt-2 flex-shrink-0
-                    ${activity.status === 'pending' ? 'bg-yellow-500' : 
-                      activity.status === 'overdue' ? 'bg-red-500' : 'bg-green-500'}
-                  `} />
+                    ${
+                      activity.status === "pending"
+                        ? "bg-yellow-500"
+                        : activity.status === "overdue"
+                        ? "bg-red-500"
+                        : "bg-green-500"
+                    }
+                  `}
+                  />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
                       <h4 className="text-sm font-medium text-gray-900 truncate">
                         {activity.title}
                       </h4>
-                      <span className="text-xs text-gray-500">{activity.time}</span>
+                      <span className="text-xs text-gray-500">
+                        {activity.time}
+                      </span>
                     </div>
-                    <p className="text-sm text-gray-600 mt-1">{activity.description}</p>
+                    <p className="text-sm text-gray-600 mt-1">
+                      {activity.description}
+                    </p>
                     {activity.status && (
-                      <span className={`
+                      <span
+                        className={`
                         inline-flex items-center px-2 py-1 rounded-full text-xs font-medium mt-2
-                        ${activity.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 
-                          activity.status === 'overdue' ? 'bg-red-100 text-red-800' : 
-                          'bg-green-100 text-green-800'}
-                      `}>
-                        {activity.status.charAt(0).toUpperCase() + activity.status.slice(1)}
+                        ${
+                          activity.status === "pending"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : activity.status === "overdue"
+                            ? "bg-red-100 text-red-800"
+                            : "bg-green-100 text-green-800"
+                        }
+                      `}
+                      >
+                        {activity.status.charAt(0).toUpperCase() +
+                          activity.status.slice(1)}
                       </span>
                     )}
                   </div>
@@ -283,9 +319,7 @@ export default function DashboardPage() {
               <Award className="h-5 w-5" />
               <span>Quick Actions</span>
             </CardTitle>
-            <CardDescription>
-              Common tasks and shortcuts
-            </CardDescription>
+            <CardDescription>Common tasks and shortcuts</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {isStudent && (
@@ -350,28 +384,42 @@ export default function DashboardPage() {
               <AlertCircle className="h-5 w-5 text-orange-500" />
               <span>Upcoming Deadlines</span>
             </CardTitle>
-            <CardDescription>
-              Don't miss these important dates
-            </CardDescription>
+            <CardDescription>Don't miss these important dates</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div className="flex items-center justify-between p-4 bg-red-50 rounded-lg border border-red-200">
                 <div>
-                  <h4 className="font-medium text-red-900">Essay on World War II</h4>
-                  <p className="text-sm text-red-700">History 101 - Due in 2 days</p>
+                  <h4 className="font-medium text-red-900">
+                    Essay on World War II
+                  </h4>
+                  <p className="text-sm text-red-700">
+                    History 101 - Due in 2 days
+                  </p>
                 </div>
-                <Button size="sm" variant="outline" className="border-red-200 text-red-700 hover:bg-red-100">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-red-200 text-red-700 hover:bg-red-100"
+                >
                   View
                 </Button>
               </div>
-              
+
               <div className="flex items-center justify-between p-4 bg-yellow-50 rounded-lg border border-yellow-200">
                 <div>
-                  <h4 className="font-medium text-yellow-900">JavaScript Quiz</h4>
-                  <p className="text-sm text-yellow-700">Programming 101 - Due in 5 days</p>
+                  <h4 className="font-medium text-yellow-900">
+                    JavaScript Quiz
+                  </h4>
+                  <p className="text-sm text-yellow-700">
+                    Programming 101 - Due in 5 days
+                  </p>
                 </div>
-                <Button size="sm" variant="outline" className="border-yellow-200 text-yellow-700 hover:bg-yellow-100">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-yellow-200 text-yellow-700 hover:bg-yellow-100"
+                >
                   View
                 </Button>
               </div>
@@ -380,5 +428,5 @@ export default function DashboardPage() {
         </Card>
       )}
     </div>
-  )
+  );
 }
