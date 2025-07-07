@@ -18,6 +18,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { NavigationTest } from '@/components/debug/navigation-test'
+import { NavigationDebug } from '@/components/debug/NavigationDebug'
 import { AnalyticsDashboard } from '@/components/analytics'
 import { apiClient } from '@/lib/api'
 import { AuthManager } from '@/lib/auth'
@@ -44,27 +45,25 @@ export default function DashboardPage() {
   const currentUser = AuthManager.getUserData()
   const userId = AuthManager.getUserId()
 
-  // Temporarily comment out data fetching to debug navigation
+  // Real data fetching
   const { data: userData } = useQuery({
     queryKey: ['user', userId],
     queryFn: () => apiClient.getUserById(userId!),
     enabled: !!userId && !currentUser,
   })
 
-  const { data: coursesData } = useQuery({
-    queryKey: ['courses', 'dashboard'],
-    queryFn: () => apiClient.getCourses({ limit: 100 }),
+  const { data: dashboardStats, isLoading: isStatsLoading } = useQuery({
+    queryKey: ['dashboard-stats'],
+    queryFn: () => apiClient.getDashboardStats(),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    cacheTime: 10 * 60 * 1000, // 10 minutes
   })
 
-  const { data: usersData } = useQuery({
-    queryKey: ['users', 'dashboard'],
-    queryFn: () => apiClient.getUsers({ limit: 100 }),
-    enabled: AuthManager.hasRole('admin') || AuthManager.hasRole('instructor'),
-  })
-
-  const { data: assignmentsData } = useQuery({
-    queryKey: ['assignments', 'dashboard'],
-    queryFn: () => apiClient.getCourseAssignments(1, { limit: 100 }), // Using a placeholder courseId for now
+  const { data: userStats } = useQuery({
+    queryKey: ['user-stats', userId],
+    queryFn: () => apiClient.getUserStats(userId!),
+    enabled: !!userId && isStudent,
+    staleTime: 5 * 60 * 1000,
   })
 
   useEffect(() => {
@@ -89,12 +88,35 @@ export default function DashboardPage() {
 
   const { isAdmin, isInstructor, isStudent } = userRoleInfo;
 
-  // Simplified stats for testing
+  // Real stats from API
   const stats: DashboardStats = {
-    totalCourses: coursesData?.pagination.total_items || 0,
-    totalUsers: usersData?.pagination.total_items || 0,
-    totalAssignments: assignmentsData?.pagination.total_items || 0,
-    recentActivity: 0
+    totalCourses: dashboardStats?.totalCourses || 0,
+    totalUsers: dashboardStats?.totalUsers || 0,
+    totalAssignments: dashboardStats?.totalAssignments || 0,
+    recentActivity: dashboardStats?.recentActivity || 0
+  }
+
+  // Loading state for stats
+  if (isStatsLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-100">
+          <div className="animate-pulse">
+            <div className="h-8 bg-gray-200 rounded w-1/3 mb-2"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="bg-white p-6 rounded-lg border animate-pulse">
+              <div className="h-12 bg-gray-200 rounded mb-4"></div>
+              <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
+              <div className="h-6 bg-gray-200 rounded w-1/3"></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
   }
 
   const recentActivity: RecentActivity[] = [];
@@ -110,7 +132,7 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       {/* Debug Navigation Test */}
-      {process.env.NODE_ENV === 'development' && <NavigationTest />}
+      {process.env.NODE_ENV === 'development' && <NavigationDebug />}
       
       {/* Welcome Header */}
       <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-100">
@@ -196,7 +218,7 @@ export default function DashboardPage() {
                   {isStudent ? 'Completion Rate' : 'Activity'}
                 </p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {isStudent ? '78%' : stats.recentActivity}
+                  {isStudent ? `${userStats?.completionRate || 0}%` : stats.recentActivity}
                 </p>
               </div>
             </div>

@@ -1,22 +1,23 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
-import { AuthManager } from '@/lib/auth';
-import { profileApi } from '@/lib/api/profile';
-import { ProfileHeader } from '@/components/profile/ProfileHeader';
-import { ProfileInformation } from '@/components/profile/ProfileInformation';
-import { ProfileStatsComponent } from '@/components/profile/ProfileStats';
-import { ProfileEditModal } from '@/components/profile/ProfileEditModal';
-import { ProfilePictureModal } from '@/components/profile/ProfilePictureModal';
-import { PasswordChangeModal } from '@/components/profile/PasswordChangeModal';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Settings, Shield, RefreshCw } from 'lucide-react';
-import { User } from '@/types';
-import { ProfileStats } from '@/types/profile';
+import { PasswordChangeModal } from "@/components/profile/PasswordChangeModal";
+import { ProfileEditModal } from "@/components/profile/ProfileEditModal";
+import { ProfileHeader } from "@/components/profile/ProfileHeader";
+import { ProfileInformation } from "@/components/profile/ProfileInformation";
+import { ProfilePictureModal } from "@/components/profile/ProfilePictureModal";
+import { ProfileStatsComponent } from "@/components/profile/ProfileStats";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { Skeleton } from "@/components/ui/skeleton";
+import { apiClient } from "@/lib/api";
+import { AuthManager } from "@/lib/auth";
+import { User } from "@/types";
+import { ProfileStats } from "@/types/profile";
+import { RefreshCw, Settings, Shield } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 export default function ProfilePage() {
   // State management
@@ -25,12 +26,12 @@ export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isStatsLoading, setIsStatsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Modal states
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isPictureModalOpen, setIsPictureModalOpen] = useState(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
-  
+
   const router = useRouter();
 
   // Load profile data
@@ -39,22 +40,22 @@ export default function ProfilePage() {
       try {
         setIsLoading(true);
         setError(null);
-        
+
         const currentUser = AuthManager.getUserData();
         if (!currentUser) {
-          router.push('/login');
+          router.push("/login");
           return;
         }
 
         setUser(currentUser);
-        
+
         // Load user stats separately to avoid blocking the main UI
         setIsStatsLoading(true);
         try {
-          const stats = await profileApi.getUserStats(currentUser.id.toString());
+          const stats = await apiClient.getUserStats(currentUser.id);
           setProfileStats(stats);
         } catch (statsError) {
-          console.warn('Failed to load user stats:', statsError);
+          console.warn("Failed to load user stats:", statsError);
           // Set default stats if endpoint not available
           setProfileStats({
             coursesEnrolled: 0,
@@ -69,11 +70,10 @@ export default function ProfilePage() {
         } finally {
           setIsStatsLoading(false);
         }
-        
       } catch (error) {
-        console.error('Error loading profile:', error);
-        setError('Gagal memuat data profil');
-        toast.error('Gagal memuat data profil');
+        console.error("Error loading profile:", error);
+        setError("Gagal memuat data profil");
+        toast.error("Gagal memuat data profil");
       } finally {
         setIsLoading(false);
       }
@@ -86,7 +86,7 @@ export default function ProfilePage() {
   const handleProfileUpdateSuccess = (updatedUser: User) => {
     setUser(updatedUser);
     AuthManager.updateUserData(updatedUser);
-    toast.success('Profil berhasil diperbarui');
+    toast.success("Profil berhasil diperbarui");
   };
 
   // Handle picture update success
@@ -96,26 +96,67 @@ export default function ProfilePage() {
       setUser(updatedUser);
       AuthManager.updateUserData(updatedUser);
     }
-    toast.success('Foto profil berhasil diperbarui');
+    toast.success("Foto profil berhasil diperbarui");
   };
 
   // Refresh profile data
   const refreshProfile = async () => {
     if (!user) return;
-    
+
     try {
       setIsStatsLoading(true);
-      const stats = await profileApi.getUserStats(user.id.toString());
+      const stats = await apiClient.getUserStats(user.id);
       setProfileStats(stats);
-      toast.success('Data profil berhasil diperbarui');
+      toast.success("Data profil berhasil diperbarui");
     } catch (error) {
-      console.error('Error refreshing profile:', error);
-      toast.error('Gagal memperbarui data profil');
+      console.error("Error refreshing profile:", error);
+      toast.error("Gagal memperbarui data profil");
     } finally {
       setIsStatsLoading(false);
     }
   };
 
+  return (
+    <ErrorBoundary>
+      <ProfilePageContent
+        user={user}
+        profileStats={profileStats}
+        isLoading={isLoading}
+        isStatsLoading={isStatsLoading}
+        error={error}
+        isEditModalOpen={isEditModalOpen}
+        setIsEditModalOpen={setIsEditModalOpen}
+        isPictureModalOpen={isPictureModalOpen}
+        setIsPictureModalOpen={setIsPictureModalOpen}
+        isPasswordModalOpen={isPasswordModalOpen}
+        setIsPasswordModalOpen={setIsPasswordModalOpen}
+        router={router}
+        refreshProfile={refreshProfile}
+        handleProfileUpdateSuccess={handleProfileUpdateSuccess}
+        handlePictureUpdateSuccess={handlePictureUpdateSuccess}
+      />
+    </ErrorBoundary>
+  );
+}
+
+// Separate component for the main content to isolate any potential errors
+function ProfilePageContent({
+  user,
+  profileStats,
+  isLoading,
+  isStatsLoading,
+  error,
+  isEditModalOpen,
+  setIsEditModalOpen,
+  isPictureModalOpen,
+  setIsPictureModalOpen,
+  isPasswordModalOpen,
+  setIsPasswordModalOpen,
+  router,
+  refreshProfile,
+  handleProfileUpdateSuccess,
+  handlePictureUpdateSuccess,
+}: any) {
   // Loading state
   if (isLoading) {
     return (
@@ -201,14 +242,17 @@ export default function ProfilePage() {
               Gagal Memuat Profil
             </h3>
             <p className="text-gray-600">
-              {error || 'Terjadi kesalahan saat memuat data profil Anda.'}
+              {error || "Terjadi kesalahan saat memuat data profil Anda."}
             </p>
             <div className="flex gap-2 justify-center">
-              <Button onClick={() => window.location.reload()} variant="outline">
+              <Button
+                onClick={() => window.location.reload()}
+                variant="outline"
+              >
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Coba Lagi
               </Button>
-              <Button onClick={() => router.push('/dashboard')}>
+              <Button onClick={() => router.push("/dashboard")}>
                 Kembali ke Dashboard
               </Button>
             </div>
@@ -229,7 +273,7 @@ export default function ProfilePage() {
               Kelola informasi profil dan pengaturan akun Anda
             </p>
           </div>
-          
+
           <div className="flex flex-wrap gap-2">
             <Button
               variant="outline"
@@ -237,10 +281,14 @@ export default function ProfilePage() {
               disabled={isStatsLoading}
               className="flex items-center"
             >
-              <RefreshCw className={`h-4 w-4 mr-2 ${isStatsLoading ? 'animate-spin' : ''}`} />
+              <RefreshCw
+                className={`h-4 w-4 mr-2 ${
+                  isStatsLoading ? "animate-spin" : ""
+                }`}
+              />
               Refresh
             </Button>
-            
+
             <Button
               variant="outline"
               onClick={() => setIsPasswordModalOpen(true)}
@@ -249,10 +297,10 @@ export default function ProfilePage() {
               <Shield className="h-4 w-4 mr-2" />
               Ubah Password
             </Button>
-            
+
             <Button
               variant="outline"
-              onClick={() => router.push('/profile/settings')}
+              onClick={() => router.push("/profile/settings")}
               className="flex items-center"
             >
               <Settings className="h-4 w-4 mr-2" />
@@ -295,16 +343,16 @@ export default function ProfilePage() {
                 </div>
               </div>
             ) : profileStats ? (
-              <ProfileStatsComponent 
-                stats={profileStats} 
-                userRole={user.role_id} 
+              <ProfileStatsComponent
+                stats={profileStats}
+                userRole={user.role_id}
               />
             ) : (
               <Card className="p-6 text-center">
                 <p className="text-gray-500">Statistik tidak tersedia</p>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={refreshProfile}
                   className="mt-3"
                 >

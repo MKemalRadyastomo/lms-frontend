@@ -70,8 +70,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   // Memoize navigation items to prevent re-creation on every render
   const navigationItems = useMemo(() => {
-    console.log("🧭 Regenerating navigation items for user:", user?.role_id);
-    
     const baseItems = [
       { name: "Dashboard", href: "/dashboard", icon: Home },
       { name: "Kursus", href: "/courses", icon: BookOpen },
@@ -105,14 +103,12 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       baseItems.push({ name: "Panel Admin", href: "/admin", icon: Shield });
     }
 
-    console.log("Generated navigation items:", baseItems); // Debug log
     return baseItems;
   }, [user?.role_id]); // Only recalculate when user role changes
 
-  // Memoize the active route check
+  // Memoize the active route check to prevent unnecessary re-renders
   const isActiveRoute = useCallback((href: string) => {
     const isActive = pathname === href;
-    console.log(`Checking active route: ${href}, current pathname: ${pathname}, isActive: ${isActive}`); // Debug log
     return isActive;
   }, [pathname]);
 
@@ -120,18 +116,15 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   // Memoize sidebar toggle
   const toggleSidebar = useCallback(() => {
-    console.log("Toggling sidebar."); // Debug log
     setIsSidebarOpen(prev => !prev);
   }, []);
 
   const closeSidebar = useCallback(() => {
-    console.log("Closing sidebar."); // Debug log
     setIsSidebarOpen(false);
   }, []);
 
   // Early returns after hooks
   if (isLoading) {
-    console.log("Layout: Loading state..."); // Debug log
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
@@ -140,15 +133,12 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   }
 
   if (!user) {
-    console.log("Layout: User not found, showing loading/redirecting."); // Debug log
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
       </div>
     );
   }
-
-  console.log("Layout: Rendering DashboardLayout."); // Debug log
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Mobile sidebar overlay */}
@@ -203,7 +193,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                   key={`nav-${item.href}`} // Stable key
                   href={item.href}
                   onClick={() => {
-                    console.log(`🔗 Navigation clicked: ${item.href}`);
                     closeSidebar(); // Close sidebar on mobile after click
                   }}
                   className={`

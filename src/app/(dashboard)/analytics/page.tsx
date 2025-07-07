@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { AuthManager } from '@/lib/auth';
 import { AnalyticsDashboard } from '@/components/analytics/AnalyticsDashboard';
+import { NavigationDebug } from '@/components/debug/NavigationDebug';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { BarChart3, TrendingUp, Users, BookOpen, Shield, AlertTriangle } from 'lucide-react';
@@ -72,6 +73,9 @@ export default function AnalyticsPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        {/* Debug Navigation Test */}
+        {process.env.NODE_ENV === 'development' && <NavigationDebug />}
+        
         {/* Page Header */}
         <div className="mb-8">
           <div className="flex items-center space-x-3 mb-4">

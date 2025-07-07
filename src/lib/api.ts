@@ -618,12 +618,108 @@ class ApiClient {
     return response.data;
   }
 
-  // Utility Methods
+  // Statistics Methods
   async getCourseStatistics(courseId: number): Promise<CourseStatistics> {
     const response = await this.client.get<CourseStatistics>(
       `/courses/${courseId}/statistics`
     );
     return response.data;
+  }
+
+  async getUserStats(userId: number): Promise<{
+    coursesEnrolled: number;
+    assignmentsCompleted: number;
+    assignmentsPending: number;
+    totalSubmissions: number;
+    averageGrade: number | null;
+    lastLoginAt: string | null;
+    accountCreatedAt: string;
+    completionRate: number;
+  }> {
+    const response = await this.client.get<any>(`/users/${userId}/stats`);
+    const stats = response.data;
+    
+    return {
+      coursesEnrolled: stats.coursesEnrolled || 0,
+      assignmentsCompleted: stats.assignmentsCompleted || 0,
+      assignmentsPending: stats.assignmentsPending || 0,
+      totalSubmissions: stats.totalSubmissions || 0,
+      averageGrade: stats.averageGrade || null,
+      lastLoginAt: stats.lastLoginAt || null,
+      accountCreatedAt: stats.accountCreatedAt || new Date().toISOString(),
+      completionRate: stats.completionRate || 0,
+    };
+  }
+
+  async getDashboardStats(): Promise<{
+    totalUsers: number;
+    totalCourses: number;
+    totalAssignments: number;
+    recentActivity: number;
+  }> {
+    try {
+      // Get users count
+      const usersResponse = await this.client.get<any>('/users', { params: { limit: 1 } });
+      const totalUsers = usersResponse.data.pagination?.total || 0;
+
+      // Get courses count
+      const coursesResponse = await this.client.get<any>('/courses', { params: { limit: 1 } });
+      const totalCourses = coursesResponse.data.pagination?.total || 0;
+
+      // Get assignments count (aggregate from all courses)
+      let totalAssignments = 0;
+      if (totalCourses > 0) {
+        const coursesData = await this.client.get<any>('/courses', { params: { limit: totalCourses } });
+        const courses = coursesData.data.data || [];
+        
+        for (const course of courses) {
+          try {
+            const assignmentsResponse = await this.client.get<any>(`/courses/${course.id}/assignments`);
+            const assignments = Array.isArray(assignmentsResponse.data) 
+              ? assignmentsResponse.data 
+              : assignmentsResponse.data.data || [];
+            totalAssignments += assignments.length;
+          } catch (error) {
+            console.warn(`Failed to get assignments for course ${course.id}:`, error);
+          }
+        }
+      }
+
+      return {
+        totalUsers,
+        totalCourses,
+        totalAssignments,
+        recentActivity: 0, // This would need a specific endpoint or calculation
+      };
+    } catch (error) {
+      console.error('Error fetching dashboard stats:', error);
+      return {
+        totalUsers: 0,
+        totalCourses: 0,
+        totalAssignments: 0,
+        recentActivity: 0,
+      };
+    }
+  }
+
+  async getAssignmentAnalytics(courseId: number, assignmentId: number): Promise<{
+    assignment_id: number;
+    submission_count: number;
+    average_grade: number;
+  }> {
+    try {
+      const response = await this.client.get<any>(
+        `/courses/${courseId}/assignments/${assignmentId}/analytics`
+      );
+      return response.data;
+    } catch (error) {
+      console.warn('Assignment analytics not available:', error);
+      return {
+        assignment_id: assignmentId,
+        submission_count: 0,
+        average_grade: 0,
+      };
+    }
   }
 
   // Utility Methods

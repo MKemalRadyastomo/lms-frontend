@@ -18,6 +18,7 @@ import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { RefreshButton } from './RefreshButton'
 import { analyticsApi } from '@/lib/api/analytics'
+import { apiClient } from '@/lib/api'
 import { AuthManager } from '@/lib/auth'
 import { 
   StudentAnalytics, 
@@ -56,7 +57,10 @@ export function AnalyticsDashboard({
 
   // Load analytics data
   const loadAnalytics = async (useCache = true) => {
-    if (!user) return
+    if (!user || !user.id) {
+      console.log('User not available, skipping analytics load')
+      return
+    }
 
     try {
       setError(null)
@@ -86,8 +90,10 @@ export function AnalyticsDashboard({
 
   // Load initial data
   useEffect(() => {
-    loadAnalytics(true)
-  }, [user, userRole, timeRange])
+    if (user && user.id) {
+      loadAnalytics(true)
+    }
+  }, [user?.id, userRole, timeRange]) // Only depend on user.id, not the entire user object
 
   if (!user) {
     return <div>Loading user data...</div>
