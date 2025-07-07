@@ -5,9 +5,14 @@ export interface User {
   email: string
   first_name?: string
   last_name?: string
+  phone?: string
+  bio?: string
+  date_of_birth?: string
   role_id: number
   created_at: string
   updated_at: string
+  last_login_at?: string
+  email_verified_at?: string
   profile_picture_url?: string
 }
 
@@ -50,20 +55,26 @@ export interface Category {
 
 export interface Course {
   id: number
-  title: string
+  name: string // Backend uses 'name' not 'title'
   description?: string
-  category_id: number
-  instructor_id: number
-  status: 'draft' | 'published' | 'archived'
+  privacy: 'private' | 'public'
+  code: string // Auto-generated 6-character code
+  teacher_id: number
+  teacher_name?: string // From JOIN with users table
   created_at: string
-  updated_at: string
 }
 
 export interface CourseDetail extends Course {
-  category: Category
-  instructor: User
-  content_count: number
-  enrollment_count: number
+  // Additional details for course detail view
+  content_count?: number
+  enrollment_count?: number
+}
+
+export interface CourseCreateData {
+  name: string
+  description?: string
+  privacy?: 'private' | 'public'
+  teacher_id: number
 }
 
 // Content Types
@@ -83,33 +94,43 @@ export interface Content {
 export interface Assignment {
   id: number
   course_id: number
+  course_content_id?: number
   title: string
   description?: string
   type: 'essay' | 'file_upload' | 'quiz'
   due_date: string
-  max_score?: number
+  max_score: number
+  quiz_questions_json?: QuizQuestion[]
+  allowed_file_types?: string
+  max_file_size_mb?: number
   created_at: string
   updated_at: string
 }
 
 export interface AssignmentDetail extends Assignment {
-  content: AssignmentContent
+  course_name?: string
+  teacher_name?: string
+  submission?: Submission
 }
 
-export type AssignmentContent = 
-  | { essay_prompt: string }
-  | { 
-      allowed_file_types: string[]
-      max_file_size_mb: number 
-    }
-  | { questions: QuizQuestion[] }
+export interface AssignmentCreateData {
+  title: string
+  description?: string
+  type: 'essay' | 'file_upload' | 'quiz'
+  due_date: string
+  max_score: number
+  quiz_questions_json?: QuizQuestion[]
+  allowed_file_types?: string
+  max_file_size_mb?: number
+}
 
 export interface QuizQuestion {
   id: number
-  question_text: string
   type: 'multiple_choice' | 'true_false' | 'short_answer'
+  question: string
   options?: string[]
   correct_answer?: string
+  points: number
 }
 
 // Submission Types
@@ -117,20 +138,39 @@ export interface Submission {
   id: number
   assignment_id: number
   student_id: number
-  submission_time: string
-  status: 'draft' | 'submitted' | 'graded' | 'late'
+  submission_text?: string
+  file_path?: string
+  quiz_answers_json?: QuizAnswer[]
   grade?: number
   feedback?: string
-  submission_content: SubmissionContent
+  status: 'draft' | 'submitted' | 'graded'
   plagiarism_score?: number
+  submitted_at: string
   created_at: string
   updated_at: string
+  graded_by?: number
 }
 
-export type SubmissionContent = 
-  | { answer_text: string }
-  | { file_url: string }
-  | { quiz_answers: QuizAnswer[] }
+export interface SubmissionDetail extends Submission {
+  assignment?: Assignment
+  student_name?: string
+  student_email?: string
+}
+
+export interface EssaySubmissionData {
+  answer_text: string
+  draft?: boolean
+}
+
+export interface FileSubmissionData {
+  submitted_file: File
+  draft?: boolean
+}
+
+export interface QuizSubmissionData {
+  answers: QuizAnswer[]
+  draft?: boolean
+}
 
 export interface QuizAnswer {
   question_id: number
@@ -176,9 +216,19 @@ export interface UserFilters {
 
 export interface AssignmentFilters {
   course_id?: number
-  status?: 'pending' | 'submitted' | 'graded'
+  type?: 'essay' | 'file_upload' | 'quiz'
+  status?: 'pending' | 'submitted' | 'graded' | 'overdue'
   due_date_before?: string
   due_date_after?: string
+  search?: string
+}
+
+export interface SubmissionFilters {
+  assignment_id?: number
+  student_id?: number
+  status?: 'draft' | 'submitted' | 'graded'
+  grade_min?: number
+  grade_max?: number
 }
 
 // UI State Types
@@ -206,6 +256,13 @@ export interface DashboardStats {
   totalStudents: number
   totalAssignments: number
   completionRate: number
+}
+
+export interface CourseStatistics {
+  courseId: number;
+  studentCount: number;
+  completedAssignments: number;
+  averageGrade: number;
 }
 
 export interface StudentDashboard {

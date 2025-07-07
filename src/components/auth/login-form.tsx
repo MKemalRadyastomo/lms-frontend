@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation } from '@tanstack/react-query'
@@ -15,6 +14,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { loginSchema, type LoginFormData } from '@/lib/validators'
 import { apiClient } from '@/lib/api'
 import { AuthManager } from '@/lib/auth'
+import { AuthResponse } from '@/types'
 
 export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false)
@@ -31,7 +31,7 @@ export function LoginForm() {
 
   const loginMutation = useMutation({
     mutationFn: apiClient.login.bind(apiClient),
-    onSuccess: async (data) => {
+    onSuccess: async (data: AuthResponse) => {
       console.log('=== LOGIN SUCCESS DEBUG ===')
       console.log('Raw backend response:', data)
       console.log('Token:', data.token)
@@ -164,16 +164,6 @@ export function LoginForm() {
             )}
           </Button>
         </form>
-
-        <div className="mt-6 text-center text-sm">
-          <span className="text-gray-600">Don't have an account? </span>
-          <Link
-            href="/register"
-            className="font-medium text-blue-600 hover:text-blue-500 transition-colors"
-          >
-            Sign up here
-          </Link>
-        </div>
       </CardContent>
     </Card>
   )

@@ -41,7 +41,7 @@ export function RegisterForm() {
     if (roles && roles.length > 0) {
       const studentRole = roles.find(role => role.name.toLowerCase() === 'student')
       if (studentRole) {
-        setValue('roleId', studentRole.id)
+        setValue('role_id', studentRole.id)
       }
     }
   }, [roles, setValue])
@@ -58,7 +58,8 @@ export function RegisterForm() {
   })
 
   const onSubmit = (data: RegisterFormData) => {
-    registerMutation.mutate(data)
+    const { role_id, ...rest } = data;
+    registerMutation.mutate({ ...rest, role_id: role_id });
   }
 
   return (
@@ -187,7 +188,7 @@ export function RegisterForm() {
             <Label htmlFor="roleId">Role</Label>
             <select
               id="roleId"
-              {...register('roleId', { valueAsNumber: true })}
+              {...register('role_id', { valueAsNumber: true })}
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               disabled={rolesLoading}
             >
@@ -198,8 +199,8 @@ export function RegisterForm() {
                 </option>
               ))}
             </select>
-            {errors.roleId && (
-              <p className="text-sm text-red-500">{errors.roleId.message}</p>
+            {errors.role_id && (
+              <p className="text-sm text-red-500">{errors.role_id.message}</p>
             )}
           </div>
 

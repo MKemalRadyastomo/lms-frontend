@@ -46,6 +46,11 @@ export class AuthManager {
     return userData ? JSON.parse(userData) : null
   }
 
+  static updateUserData(user: User): void {
+    // Update the stored user data with new information
+    this.setUserData(user)
+  }
+
   static clearAuth(): void {
     Cookies.remove(AUTH_TOKEN_KEY)
     Cookies.remove(USER_ID_KEY)
@@ -58,18 +63,26 @@ export class AuthManager {
 
   static hasRole(requiredRole: string): boolean {
     const user = this.getUserData()
-    if (!user) return false
-    
-    // This is a simplified role check - in a real app, you'd check permissions
-    // For now, we'll assume role names match the role_id
-    const roleMap: { [key: number]: string } = {
-      1: 'student',
-      2: 'instructor',
-      3: 'admin'
+    if (!user) {
+      console.log('No user data found for role check') // Debug
+      return false
     }
     
-    const userRole = roleMap[user.role_id]
-    return userRole === requiredRole
+    console.log('Checking role:', requiredRole, 'User role_id:', user.role_id) // Debug
+    
+    // Map role_id to both English and Indonesian role names for compatibility
+    const roleMap: { [key: number]: string[] } = {
+      1: ['student', 'siswa'],     // Student
+      2: ['instructor', 'guru'],   // Teacher/Instructor
+      3: ['admin']                 // Admin
+    }
+    
+    const userRoles = roleMap[user.role_id] || []
+    const hasRole = userRoles.includes(requiredRole)
+    
+    console.log('User roles:', userRoles, 'Has role:', hasRole) // Debug
+    
+    return hasRole
   }
 
   static hasAnyRole(roles: string[]): boolean {
@@ -81,11 +94,12 @@ export class AuthManager {
 
     // Define route permissions
     const routePermissions: { [key: string]: string[] } = {
-      '/dashboard': ['student', 'instructor', 'admin'],
-      '/courses': ['student', 'instructor', 'admin'],
-      '/assignments': ['student', 'instructor', 'admin'],
+      '/dashboard': ['student', 'siswa', 'instructor', 'guru', 'admin'],
+      '/courses': ['student', 'siswa', 'instructor', 'guru', 'admin'],
+      '/assignments': ['student', 'siswa', 'instructor', 'guru', 'admin'],
+      '/users': ['instructor', 'guru', 'admin'],
       '/admin': ['admin'],
-      '/profile': ['student', 'instructor', 'admin'],
+      '/profile': ['student', 'siswa', 'instructor', 'guru', 'admin'],
     }
 
     const requiredRoles = routePermissions[route]
