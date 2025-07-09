@@ -46,6 +46,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useToast } from '@/components/ui/use-toast';
+import { Content, CourseMaterial } from '@/types';
 
 const CourseMaterialsPage = () => {
   const params = useParams<{ courseId: string }>();
@@ -196,18 +197,24 @@ const CourseMaterialsPage = () => {
   };
 
   const getMaterialIcon = (material: Content) => {
-    if (material.type === 'material' && material.details?.video_url) {
-      return <PlayCircle className="h-5 w-5 text-red-500" />;
-    }
-    if (material.type === 'material' && material.details?.file_path) {
-      return <File className="h-5 w-5 text-blue-500" />;
+    if (material.type === 'material' && material.details) {
+      const materialDetails = material.details as CourseMaterial;
+      if (materialDetails.video_url) {
+        return <PlayCircle className="h-5 w-5 text-red-500" />;
+      }
+      if (materialDetails.file_path) {
+        return <File className="h-5 w-5 text-blue-500" />;
+      }
     }
     return <FileText className="h-5 w-5 text-gray-500" />;
   };
 
   const getMaterialType = (material: Content) => {
-    if (material.type === 'material' && material.details?.video_url) return 'Video';
-    if (material.type === 'material' && material.details?.file_path) return 'File';
+    if (material.type === 'material' && material.details) {
+      const materialDetails = material.details as CourseMaterial;
+      if (materialDetails.video_url) return 'Video';
+      if (materialDetails.file_path) return 'File';
+    }
     return 'Teks';
   };
 
@@ -456,7 +463,7 @@ const CourseMaterialsPage = () => {
                                 <Eye className="h-4 w-4 mr-2" />
                                 Lihat Detail
                               </DropdownMenuItem>
-                              {material.details?.file_path && (
+                              {material.type === 'material' && material.details && (material.details as CourseMaterial).file_path && (
                                 <DropdownMenuItem>
                                   <Download className="h-4 w-4 mr-2" />
                                   Download File
@@ -484,7 +491,7 @@ const CourseMaterialsPage = () => {
                       )}
                       
                       <div className="space-y-3">
-                        {material.type === 'material' && material.details?.content && (
+                        {material.type === 'material' && material.details && (material.details as CourseMaterial).content && (
                           <div className="p-3 bg-gray-50 rounded-lg">
                             <p className="text-sm text-gray-700 line-clamp-4">
                               {(material.details as CourseMaterial).content}
@@ -492,7 +499,7 @@ const CourseMaterialsPage = () => {
                           </div>
                         )}
                         
-                        {material.type === 'material' && material.details?.video_url && (
+                        {material.type === 'material' && material.details && (material.details as CourseMaterial).video_url && (
                           <div className="flex items-center gap-2 text-sm text-blue-600">
                             <PlayCircle className="h-4 w-4" />
                             <a 
@@ -506,7 +513,7 @@ const CourseMaterialsPage = () => {
                           </div>
                         )}
                         
-                        {material.type === 'material' && material.details?.file_path && (
+                        {material.type === 'material' && material.details && (material.details as CourseMaterial).file_path && (
                           <div className="flex items-center gap-2 text-sm text-green-600">
                             <File className="h-4 w-4" />
                             <a 
@@ -524,10 +531,15 @@ const CourseMaterialsPage = () => {
                       <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
                         <div className="flex items-center gap-2 text-xs text-gray-500">
                           <Calendar className="h-3 w-3" />
-                          {material.type === 'material' && material.details?.publish_date ? 
-                            new Date((material.details as CourseMaterial).publish_date).toLocaleDateString('id-ID') :
-                            'Tidak ada tanggal'
-                          }
+                          {(() => {
+                            if (material.type === 'material' && material.details) {
+                              const materialDetails = material.details as CourseMaterial;
+                              return materialDetails.publish_date ? 
+                                new Date(materialDetails.publish_date).toLocaleDateString('id-ID') :
+                                'Tidak ada tanggal';
+                            }
+                            return 'Tidak ada tanggal';
+                          })()}
                         </div>
                         
                         <Button size="sm" variant="outline" className="text-xs">
