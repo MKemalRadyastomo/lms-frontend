@@ -1,3 +1,4 @@
+'use client';
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -13,6 +14,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
+import { useTranslation } from 'react-i18next';
 
 const filtersSchema = z.object({
   search: z.string().optional(),
@@ -27,6 +29,7 @@ interface AssignmentFiltersProps {
 }
 
 export const AssignmentFilters: React.FC<AssignmentFiltersProps> = ({ onFilterChange }) => {
+  const { t } = useTranslation();
   const form = useForm<FiltersFormValues>({
     resolver: zodResolver(filtersSchema),
     defaultValues: {
@@ -39,22 +42,22 @@ export const AssignmentFilters: React.FC<AssignmentFiltersProps> = ({ onFilterCh
   // Helper functions to get display text
   const getTypeDisplayText = (value: string) => {
     switch (value) {
-      case 'all': return 'All Types';
-      case 'essay': return 'Essay';
-      case 'file_upload': return 'File Upload';
-      case 'quiz': return 'Quiz';
-      default: return 'Type';
+      case 'all': return t('all_types');
+      case 'essay': return t('essay');
+      case 'file_upload': return t('file_upload');
+      case 'quiz': return t('quiz');
+      default: return t('type');
     }
   };
 
   const getStatusDisplayText = (value: string) => {
     switch (value) {
-      case 'all': return 'All Statuses';
-      case 'pending': return 'Pending';
-      case 'submitted': return 'Submitted';
-      case 'graded': return 'Graded';
-      case 'overdue': return 'Overdue';
-      default: return 'Status';
+      case 'all': return t('all_statuses');
+      case 'pending': return t('pending');
+      case 'submitted': return t('submitted');
+      case 'graded': return t('graded');
+      case 'overdue': return t('overdue');
+      default: return t('status');
     }
   };
 
@@ -75,7 +78,7 @@ export const AssignmentFilters: React.FC<AssignmentFiltersProps> = ({ onFilterCh
           render={({ field }) => (
             <FormItem>
               <FormControl>
-                <Input placeholder="Search assignments..." {...field} />
+                <Input placeholder={t('search_assignments')} {...field} />
               </FormControl>
             </FormItem>
           )}
@@ -88,16 +91,16 @@ export const AssignmentFilters: React.FC<AssignmentFiltersProps> = ({ onFilterCh
               <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Type">
+                    <SelectValue placeholder={t('type')}>
                       {getTypeDisplayText(field.value ?? '')}
                     </SelectValue>
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="essay">Essay</SelectItem>
-                  <SelectItem value="file_upload">File Upload</SelectItem>
-                  <SelectItem value="quiz">Quiz</SelectItem>
+                  <SelectItem value="all">{t('all_types')}</SelectItem>
+                  <SelectItem value="essay">{t('essay')}</SelectItem>
+                  <SelectItem value="file_upload">{t('file_upload')}</SelectItem>
+                  <SelectItem value="quiz">{t('quiz')}</SelectItem>
                 </SelectContent>
               </Select>
             </FormItem>
@@ -111,23 +114,23 @@ export const AssignmentFilters: React.FC<AssignmentFiltersProps> = ({ onFilterCh
               <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Status">
+                    <SelectValue placeholder={t('status')}>
                       {getStatusDisplayText(field.value ?? '')}
                     </SelectValue>
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="submitted">Submitted</SelectItem>
-                  <SelectItem value="graded">Graded</SelectItem>
-                  <SelectItem value="overdue">Overdue</SelectItem>
+                  <SelectItem value="all">{t('all_statuses')}</SelectItem>
+                  <SelectItem value="pending">{t('pending')}</SelectItem>
+                  <SelectItem value="submitted">{t('submitted')}</SelectItem>
+                  <SelectItem value="graded">{t('graded')}</SelectItem>
+                  <SelectItem value="overdue">{t('overdue')}</SelectItem>
                 </SelectContent>
               </Select>
             </FormItem>
           )}
         />
-        <Button type="submit">Filter</Button>
+        <Button type="submit">{t('filter')}</Button>
       </form>
     </Form>
   );

@@ -27,6 +27,9 @@ import {
   UserRole 
 } from '@/types/analytics'
 import { formatDistanceToNow } from 'date-fns'
+import { useTranslation } from 'react-i18next'
+import type { Locale } from 'date-fns';
+import { id } from 'date-fns/locale' // Import Indonesian locale
 
 interface AnalyticsDashboardProps {
   className?: string
@@ -55,6 +58,13 @@ export function AnalyticsDashboard({
     }
   }, [user?.role_id])
 
+  const { t, i18n } = useTranslation(); // Get i18n instance
+
+  // Determine locale for date-fns
+  const dateFnsLocale = useMemo(() => {
+    return i18n.language === 'id' ? id : undefined; // Use 'id' locale if i18n language is 'id', otherwise default
+  }, [i18n.language]);
+
   // Load analytics data
   const loadAnalytics = async (useCache = true) => {
     if (!user || !user.id) {
@@ -77,7 +87,7 @@ export function AnalyticsDashboard({
       }
     } catch (error) {
       console.error('Error loading analytics:', error)
-      setError(error instanceof Error ? error.message : 'Failed to load analytics')
+      setError(error instanceof Error ? error.message : t('failed_to_load_analytics'))
     } finally {
       setIsRefreshing(false)
     }
@@ -96,7 +106,7 @@ export function AnalyticsDashboard({
   }, [user?.id, userRole, timeRange]) // Only depend on user.id, not the entire user object
 
   if (!user) {
-    return <div>Loading user data...</div>
+    return <div>{t('loading_user_data')}</div>
   }
 
   if (error && !analyticsData) {
@@ -105,7 +115,7 @@ export function AnalyticsDashboard({
         <div className="text-center">
           <AlertTriangle className="h-8 w-8 text-red-500 mx-auto mb-2" />
           <h3 className="text-lg font-semibold text-gray-900 mb-2">
-            Gagal Memuat Analytics
+            {t('failed_to_load_analytics_title')}
           </h3>
           <p className="text-gray-600 mb-4">{error}</p>
           <RefreshButton
@@ -125,11 +135,11 @@ export function AnalyticsDashboard({
       {/* Header with Refresh Button */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Analytics Dashboard</h2>
+          <h2 className="text-2xl font-bold text-gray-900">{t('analytics_dashboard_title')}</h2>
           <p className="text-gray-600">
-            {userRole === 'student' && 'Track your learning progress and performance'}
-            {userRole === 'instructor' && 'Monitor your classes and student performance'}
-            {userRole === 'admin' && 'System-wide insights and performance metrics'}
+            {userRole === 'student' && t('student_dashboard_description')}
+            {userRole === 'instructor' && t('instructor_dashboard_description')}
+            {userRole === 'admin' && t('admin_dashboard_description')}
           </p>
         </div>
         
@@ -144,7 +154,7 @@ export function AnalyticsDashboard({
       {/* Analytics Content */}
       {analyticsData && (
         <>
-          {userRole === 'student' && <StudentAnalyticsView data={analyticsData as StudentAnalytics} compact={compact} />}
+          {userRole === 'student' && <StudentAnalyticsView data={analyticsData as StudentAnalytics} compact={compact} dateFnsLocale={dateFnsLocale} />}
           {userRole === 'instructor' && <InstructorAnalyticsView data={analyticsData as InstructorAnalytics} compact={compact} />}
           {userRole === 'admin' && <AdminAnalyticsView data={analyticsData as AdminAnalytics} compact={compact} />}
         </>
@@ -154,7 +164,8 @@ export function AnalyticsDashboard({
 }
 
 // Student Analytics View
-function StudentAnalyticsView({ data, compact }: { data: StudentAnalytics; compact: boolean }) {
+function StudentAnalyticsView({ data, compact, dateFnsLocale }: { data: StudentAnalytics; compact: boolean; dateFnsLocale: Locale | undefined }) {
+  const { t } = useTranslation();
   const avgProgress = data.courseProgress.reduce((acc, course) => acc + course.progressPercentage, 0) / data.courseProgress.length || 0
   
   return (
@@ -162,27 +173,27 @@ function StudentAnalyticsView({ data, compact }: { data: StudentAnalytics; compa
       {/* Quick Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          title="Course Progress"
+          title={t('course_progress')}
           value={`${Math.round(avgProgress)}%`}
           icon={<BookOpen className="h-5 w-5" />}
           trend={avgProgress > 70 ? 'up' : avgProgress > 40 ? 'neutral' : 'down'}
         />
         <StatCard
-          title="Assignments"
+          title={t('assignments')}
           value={`${data.assignmentStats.completed}/${data.assignmentStats.total}`}
           icon={<ClipboardList className="h-5 w-5" />}
           trend={data.assignmentStats.completionRate > 80 ? 'up' : 'neutral'}
-          subtitle="Completed"
+          subtitle={t('completed')}
         />
         <StatCard
-          title="Average Grade"
-          value={data.gradeAnalytics.averageGrade ? `${data.gradeAnalytics.averageGrade.toFixed(1)}` : 'N/A'}
+          title={t('average_grade')}
+          value={data.gradeAnalytics.averageGrade ? `${data.gradeAnalytics.averageGrade.toFixed(1)}` : t('not_available_abbr')}
           icon={<Award className="h-5 w-5" />}
           trend={data.gradeAnalytics.averageGrade && data.gradeAnalytics.averageGrade > 80 ? 'up' : 'neutral'}
         />
         <StatCard
-          title="Study Streak"
-          value={`${data.studyTimeAnalytics.studyStreak} days`}
+          title={t('study_streak')}
+          value={t('study_streak_days', { count: data.studyTimeAnalytics.studyStreak })}
           icon={<Target className="h-5 w-5" />}
           trend={data.studyTimeAnalytics.studyStreak > 7 ? 'up' : 'neutral'}
         />
@@ -195,9 +206,9 @@ function StudentAnalyticsView({ data, compact }: { data: StudentAnalytics; compa
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <BookOpen className="h-5 w-5" />
-                Course Progress
+                {t('course_progress')}
               </CardTitle>
-              <CardDescription>Your progress across all enrolled courses</CardDescription>
+              <CardDescription>{t('course_progress_description')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {data.courseProgress.map((course) => (
@@ -206,19 +217,19 @@ function StudentAnalyticsView({ data, compact }: { data: StudentAnalytics; compa
                     <div>
                       <h4 className="font-medium">{course.courseName}</h4>
                       <p className="text-sm text-gray-600">
-                        {course.completedModules}/{course.totalModules} modules completed
+                        {t('modules_completed', { completed: course.completedModules, total: course.totalModules })}
                       </p>
                     </div>
                     <div className="text-right">
                       <span className="text-lg font-semibold">{course.progressPercentage}%</span>
                       <Badge variant={course.difficulty === 'hard' ? 'destructive' : course.difficulty === 'medium' ? 'default' : 'secondary'} className="ml-2">
-                        {course.difficulty}
+                        {t(course.difficulty)}
                       </Badge>
                     </div>
                   </div>
                   <Progress value={course.progressPercentage} className="h-2" />
                   <p className="text-xs text-gray-500">
-                    Last activity: {formatDistanceToNow(new Date(course.lastActivity), { addSuffix: true })}
+                    {t('last_activity')}: {formatDistanceToNow(new Date(course.lastActivity), { addSuffix: true, locale: dateFnsLocale })}
                   </p>
                 </div>
               ))}
@@ -231,9 +242,9 @@ function StudentAnalyticsView({ data, compact }: { data: StudentAnalytics; compa
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Clock className="h-5 w-5" />
-                  Upcoming Deadlines
+                  {t('upcoming_deadlines')}
                 </CardTitle>
-                <CardDescription>Don't miss these important dates</CardDescription>
+                <CardDescription>{t('upcoming_deadlines_description')}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
@@ -250,10 +261,10 @@ function StudentAnalyticsView({ data, compact }: { data: StudentAnalytics; compa
                         </div>
                         <div className="text-right">
                           <p className="text-sm font-medium">
-                            {formatDistanceToNow(new Date(deadline.dueDate), { addSuffix: true })}
+                            {formatDistanceToNow(new Date(deadline.dueDate), { addSuffix: true, locale: dateFnsLocale })}
                           </p>
                           <Badge variant={deadline.status === 'submitted' ? 'default' : deadline.status === 'in_progress' ? 'secondary' : 'outline'}>
-                            {deadline.status.replace('_', ' ')}
+                            {t(deadline.status.replace(' ', ''))}
                           </Badge>
                         </div>
                       </div>
@@ -270,29 +281,30 @@ function StudentAnalyticsView({ data, compact }: { data: StudentAnalytics; compa
 }
 
 function InstructorAnalyticsView({ data, compact }: { data: InstructorAnalytics; compact: boolean }) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          title="Classes"
+          title={t('classes')}
           value={data.classPerformance.length.toString()}
           icon={<BookOpen className="h-5 w-5" />}
-          subtitle="Active Courses"
+          subtitle={t('active_courses')}
         />
         <StatCard
-          title="Students"
+          title={t('students')}
           value="43"
           icon={<Users className="h-5 w-5" />}
-          subtitle="Total Enrolled"
+          subtitle={t('total_enrolled')}
         />
         <StatCard
-          title="Avg Performance"
+          title={t('avg_performance')}
           value="81.4"
           icon={<TrendingUp className="h-5 w-5" />}
           trend="up"
         />
         <StatCard
-          title="Pending Grading"
+          title={t('pending_grading')}
           value={data.gradingWorkload.pendingSubmissions.toString()}
           icon={<ClipboardList className="h-5 w-5" />}
           trend={data.gradingWorkload.pendingSubmissions < 10 ? 'up' : 'down'}
@@ -303,33 +315,34 @@ function InstructorAnalyticsView({ data, compact }: { data: InstructorAnalytics;
 }
 
 function AdminAnalyticsView({ data, compact }: { data: AdminAnalytics; compact: boolean }) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          title="Total Users"
+          title={t('total_users')}
           value={data.systemStats.totalUsers.toString()}
           icon={<Users className="h-5 w-5" />}
-          subtitle={`${data.systemStats.activeUsers} active`}
+          subtitle={t('active_users', { count: data.systemStats.activeUsers })}
         />
         <StatCard
-          title="Courses"
+          title={t('courses')}
           value={data.systemStats.totalCourses.toString()}
           icon={<BookOpen className="h-5 w-5" />}
-          subtitle="Platform-wide"
+          subtitle={t('platform_wide')}
         />
         <StatCard
-          title="Assignments"
+          title={t('assignments')}
           value={data.systemStats.totalAssignments.toString()}
           icon={<ClipboardList className="h-5 w-5" />}
-          subtitle="Total Created"
+          subtitle={t('total_created')}
         />
         <StatCard
-          title="System Health"
-          value={`${data.performanceBenchmarks.systemResponseTime.toFixed(0)}ms`}
+          title={t('system_health')}
+          value={t('response_time_ms', { time: data.performanceBenchmarks.systemResponseTime.toFixed(0) })}
           icon={<Brain className="h-5 w-5" />}
           trend={data.performanceBenchmarks.systemResponseTime < 500 ? 'up' : 'down'}
-          subtitle="Response Time"
+          subtitle={t('response_time')}
         />
       </div>
     </div>

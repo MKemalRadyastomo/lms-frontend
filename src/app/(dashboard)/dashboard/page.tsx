@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
-import { NavigationDebug } from "@/components/debug/NavigationDebug";
+
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -25,6 +25,7 @@ import {
 import { apiClient } from "@/lib/api";
 import { AuthManager } from "@/lib/auth";
 import { User } from "@/types";
+import { useTranslation } from "react-i18next";
 
 interface DashboardStats {
   totalCourses: number;
@@ -45,6 +46,7 @@ interface RecentActivity {
 export default function DashboardPage() {
   const [user, setUser] = useState<User | null>(null);
   const userId = AuthManager.getUserId();
+  const { t } = useTranslation();
 
   useEffect(() => {
     // Get current user data inside useEffect to avoid dependency issues
@@ -69,7 +71,7 @@ export default function DashboardPage() {
 
   // Real data fetching
   const { data: userData } = useQuery({
-    queryKey: ["user", userId],
+    queryKey: ['user', userId],
     queryFn: () => apiClient.getUserById(userId!),
     enabled: !!userId && !user, // Changed from !currentUser to !user
   });
@@ -100,6 +102,22 @@ export default function DashboardPage() {
     totalAssignments: dashboardStats?.totalAssignments ?? 0,
     recentActivity: dashboardStats?.recentActivity ?? 0,
   };
+
+  // MOCK DATA for upcoming deadlines - replace with API call
+  const upcomingDeadlines = [
+    {
+      id: '1',
+      assignmentTitleKey: 'essay_world_war_2',
+      courseName: 'History 101',
+      daysLeft: 2,
+    },
+    {
+      id: '2',
+      assignmentTitleKey: 'javascript_quiz',
+      courseName: 'Programming 101',
+      daysLeft: 5,
+    },
+  ];
 
   // Loading state for stats
   if (isStatsLoading) {
@@ -139,20 +157,19 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* Debug Navigation Test */}
-      {process.env.NODE_ENV === "development" && <NavigationDebug />}
+      
 
       {/* Welcome Header */}
       <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-100">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
-              Welcome back, {user.first_name || user.username}! 👋
+              {t('welcome_back', { name: user.first_name || user.username })}
             </h1>
             <p className="text-gray-600 mt-2">
-              {isAdmin && "Manage your learning platform from here."}
-              {isInstructor && "Track your courses and student progress."}
-              {isStudent && "Continue your learning journey."}
+              {isAdmin && t('admin_dashboard_welcome')}
+              {isInstructor && t('instructor_dashboard_welcome')}
+              {isStudent && t('student_dashboard_welcome')}
             </p>
           </div>
           <div className="hidden md:block">
@@ -173,7 +190,7 @@ export default function DashboardPage() {
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-600">
-                  {isStudent ? "Enrolled Courses" : "Total Courses"}
+                  {isStudent ? t('enrolled_courses') : t('total_courses')}
                 </p>
                 <p className="text-2xl font-bold text-gray-900">
                   {stats.totalCourses}
@@ -192,7 +209,7 @@ export default function DashboardPage() {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-600">
-                    {isAdmin ? "Total Users" : "Students"}
+                    {isAdmin ? t('total_users') : t('students')}
                   </p>
                   <p className="text-2xl font-bold text-gray-900">
                     {stats.totalUsers}
@@ -211,7 +228,7 @@ export default function DashboardPage() {
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-600">
-                  {isStudent ? "Assignments" : "Total Assignments"}
+                  {isStudent ? t('assignments') : t('total_assignments')}
                 </p>
                 <p className="text-2xl font-bold text-gray-900">
                   {stats.totalAssignments}
@@ -229,7 +246,7 @@ export default function DashboardPage() {
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-600">
-                  {isStudent ? "Completion Rate" : "Activity"}
+                  {isStudent ? t('completion_rate') : t('activity')}
                 </p>
                 <p className="text-2xl font-bold text-gray-900">
                   {isStudent
@@ -249,10 +266,10 @@ export default function DashboardPage() {
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Clock className="h-5 w-5" />
-              <span>Recent Activity</span>
+              <span>{t('recent_activity')}</span>
             </CardTitle>
             <CardDescription>
-              Stay updated with your latest activities
+              {t('recent_activity_description')}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -299,8 +316,7 @@ export default function DashboardPage() {
                         }
                       `}
                       >
-                        {activity.status.charAt(0).toUpperCase() +
-                          activity.status.slice(1)}
+                        {t(activity.status)}
                       </span>
                     )}
                   </div>
@@ -315,24 +331,24 @@ export default function DashboardPage() {
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Award className="h-5 w-5" />
-              <span>Quick Actions</span>
+              <span>{t('quick_actions')}</span>
             </CardTitle>
-            <CardDescription>Common tasks and shortcuts</CardDescription>
+            <CardDescription>{t('quick_actions_description')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {isStudent && (
               <>
                 <Button className="w-full justify-start" variant="outline">
                   <BookOpen className="mr-2 h-4 w-4" />
-                  Jelajahi Kursus
+                  {t('explore_courses')}
                 </Button>
                 <Button className="w-full justify-start" variant="outline">
                   <ClipboardList className="mr-2 h-4 w-4" />
-                  Lihat Tugas
+                  {t('view_assignments')}
                 </Button>
                 <Button className="w-full justify-start" variant="outline">
                   <Calendar className="mr-2 h-4 w-4" />
-                  Cek Jadwal
+                  {t('check_schedule')}
                 </Button>
               </>
             )}
@@ -341,15 +357,15 @@ export default function DashboardPage() {
               <>
                 <Button className="w-full justify-start" variant="outline">
                   <BookOpen className="mr-2 h-4 w-4" />
-                  Buat Kursus
+                  {t('create_course')}
                 </Button>
                 <Button className="w-full justify-start" variant="outline">
                   <ClipboardList className="mr-2 h-4 w-4" />
-                  Tugas Baru
+                  {t('new_assignment')}
                 </Button>
                 <Button className="w-full justify-start" variant="outline">
                   <Users className="mr-2 h-4 w-4" />
-                  Lihat Siswa
+                  {t('view_students')}
                 </Button>
               </>
             )}
@@ -358,15 +374,15 @@ export default function DashboardPage() {
               <>
                 <Button className="w-full justify-start" variant="outline">
                   <Users className="mr-2 h-4 w-4" />
-                  Kelola Pengguna
+                  {t('manage_users')}
                 </Button>
                 <Button className="w-full justify-start" variant="outline">
                   <BookOpen className="mr-2 h-4 w-4" />
-                  Kelola Kursus
+                  {t('manage_courses')}
                 </Button>
                 <Button className="w-full justify-start" variant="outline">
                   <TrendingUp className="mr-2 h-4 w-4" />
-                  Lihat Analitik
+                  {t('view_analytics')}
                 </Button>
               </>
             )}
@@ -380,47 +396,34 @@ export default function DashboardPage() {
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <AlertCircle className="h-5 w-5 text-orange-500" />
-              <span>Upcoming Deadlines</span>
+              <span>{t('upcoming_deadlines')}</span>
             </CardTitle>
-            <CardDescription>Don't miss these important dates</CardDescription>
+            <CardDescription>{t('upcoming_deadlines_description')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-red-50 rounded-lg border border-red-200">
-                <div>
-                  <h4 className="font-medium text-red-900">
-                    Essay on World War II
-                  </h4>
-                  <p className="text-sm text-red-700">
-                    History 101 - Due in 2 days
-                  </p>
-                </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="border-red-200 text-red-700 hover:bg-red-100"
+              {upcomingDeadlines.map((deadline) => (
+                <div
+                  key={deadline.id}
+                  className="flex items-center justify-between p-4 bg-red-50 rounded-lg border border-red-200"
                 >
-                  View
-                </Button>
-              </div>
-
-              <div className="flex items-center justify-between p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-                <div>
-                  <h4 className="font-medium text-yellow-900">
-                    JavaScript Quiz
-                  </h4>
-                  <p className="text-sm text-yellow-700">
-                    Programming 101 - Due in 5 days
-                  </p>
+                  <div>
+                    <h4 className="font-medium text-red-900">
+                      {t(deadline.assignmentTitleKey)}
+                    </h4>
+                    <p className="text-sm text-red-700">
+                      {deadline.courseName} - {t('due_in_days', { count: deadline.daysLeft })}
+                    </p>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="border-red-200 text-red-700 hover:bg-red-100"
+                  >
+                    {t('view')}
+                  </Button>
                 </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="border-yellow-200 text-yellow-700 hover:bg-yellow-100"
-                >
-                  View
-                </Button>
-              </div>
+              ))}
             </div>
           </CardContent>
         </Card>

@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState } from 'react';
@@ -14,12 +13,14 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbP
 import { SlashIcon } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api';
+import { useTranslation } from 'react-i18next';
 
 const CourseAssignmentsPage = () => {
   const params = useParams();
   const { user, isLoading: isUserLoading } = useAuth();
   const [isNavigating, setIsNavigating] = useState(false);
   const router = useRouter();
+  const { t } = useTranslation();
   const courseId = Number(params.courseId);
 
   const userRole = user ? (user.role_id === 1 ? 'student' : user.role_id === 2 ? 'teacher' : 'admin') : 'student';
@@ -42,7 +43,7 @@ const CourseAssignmentsPage = () => {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <span className="ml-2 text-gray-600">Memuat...</span>
+        <span className="ml-2 text-gray-600">{t('loading')}</span>
       </div>
     );
   }
@@ -54,7 +55,7 @@ const CourseAssignmentsPage = () => {
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link href="/dashboard">Beranda</Link>
+              <Link href="/dashboard">{t('home')}</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator>
@@ -69,7 +70,7 @@ const CourseAssignmentsPage = () => {
             <SlashIcon />
           </BreadcrumbSeparator>
           <BreadcrumbItem>
-            <BreadcrumbPage>Tugas</BreadcrumbPage>
+            <BreadcrumbPage>{t('assignments')}</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
@@ -77,8 +78,8 @@ const CourseAssignmentsPage = () => {
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Tugas Kursus: {course.name}</h1>
-          <p className="text-gray-600 mt-1">Kelola dan lihat semua tugas untuk kursus ini</p>
+          <h1 className="text-3xl font-bold text-gray-900">{t('course_assignments', { courseName: course.name })}</h1>
+          <p className="text-gray-600 mt-1">{t('manage_assignments_description')}</p>
         </div>
         {(AuthManager.hasRole('teacher') || AuthManager.hasRole('admin') || AuthManager.hasRole('guru')) && (
           <Button 
@@ -89,12 +90,12 @@ const CourseAssignmentsPage = () => {
             {isNavigating ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                Memuat...
+                {t('loading')}
               </>
             ) : (
               <>
                 <BookOpen className="h-4 w-4" />
-                Buat Tugas Baru
+                {t('create_new_assignment')}
               </>
             )}
           </Button>

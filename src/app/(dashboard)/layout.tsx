@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
 import { BookOpen, Home, Settings, Shield, User as UserIcon, Users, X, BarChart3 } from "lucide-react";
 import { Branding } from "@/components/layout/Branding";
 import { EnhancedHeader } from "@/components/layout/EnhancedHeader";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
@@ -22,9 +22,15 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { t } = useTranslation();
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Memoize navigation items to prevent re-creation on every render
   const navigationItems = useMemo(() => {
+    if (!isMounted) return [];
     const baseItems = [
       { name: t("dashboard"), href: "/dashboard", icon: Home },
       { name: t("courses"), href: "/courses", icon: BookOpen },
@@ -63,7 +69,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     }
 
     return baseItems;
-  }, [user?.role_id, t]); // Only recalculate when user role changes or translation function changes
+  }, [user?.role_id, t, isMounted]); // Only recalculate when user role changes or translation function changes
 
   // Memoize the active route check to prevent unnecessary re-renders
   const isActiveRoute = useCallback(
@@ -82,6 +88,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const closeSidebar = useCallback(() => {
     setIsSidebarOpen(false);
   }, []);
+
+  if (!isMounted) {
+    return null;
+  }
 
   return (
     <div

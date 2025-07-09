@@ -1,14 +1,9 @@
-'use client'
-
-import { QueryProvider } from "@/components/providers/query-provider";
-import { ThemeProvider } from "@/components/providers/theme-provider";
-import { I18nProvider } from "@/components/providers/i18n-provider";
-import { Toaster } from "@/components/ui/toaster";
-import ThemeInitializer from "@/components/theme/ThemeInitializer";
+import { RootProvider } from "@/components/providers/root-provider";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import i18n from '../../i18n';
+import { useTranslation } from "@/lib/i18n.server"; // Import useTranslation from server-side i18n
+import { headers } from 'next/headers'; // Import headers
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -25,26 +20,21 @@ export const viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const headersList = headers();
+  const acceptLanguage = headersList.get('accept-language') || 'en-US'; // Default to en-US if header is missing
+  const lng = acceptLanguage.split(',')[0].split('-')[0]; // Extract primary language (e.g., 'en' from 'en-US,en;q=0.9')
+
+  const { i18n } = await useTranslation(lng, 'common'); // Use detected language
+
   return (
-    <html lang={i18n.language} suppressHydrationWarning>
+    <html lang={i18n.language} dir={i18n.dir()} suppressHydrationWarning> {/* Add lang and dir attributes */}
       <body className={inter.className}>
-        <I18nProvider>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="light"
-            enableSystem
-            disableTransitionOnChange
-          >
-            <QueryProvider>{children}</QueryProvider>
-            <Toaster />
-            <ThemeInitializer />
-          </ThemeProvider>
-        </I18nProvider>
+        <RootProvider resources={i18n.services.resourceStore.data}>{children}</RootProvider> {/* Pass resources to RootProvider */}
       </body>
     </html>
   );

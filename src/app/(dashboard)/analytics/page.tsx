@@ -4,17 +4,19 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { AuthManager } from '@/lib/auth';
 import { AnalyticsDashboard } from '@/components/analytics/AnalyticsDashboard';
-import { NavigationDebug } from '@/components/debug/NavigationDebug';
+
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { BarChart3, TrendingUp, Users, BookOpen, Shield, AlertTriangle } from 'lucide-react';
 import { User } from '@/types';
+import { useTranslation } from 'react-i18next'; // Added import
 
 export default function AnalyticsPage() {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasAccess, setHasAccess] = useState(false);
   const router = useRouter();
+  const { t } = useTranslation(); // Added useTranslation hook
 
   useEffect(() => {
     // Check authentication and permissions
@@ -57,13 +59,13 @@ export default function AnalyticsPage() {
               <Shield className="h-8 w-8 text-red-600" />
             </div>
             <h3 className="text-lg font-semibold text-gray-900">
-              Akses Ditolak
+              {t('access_denied_title')}
             </h3>
             <p className="text-gray-600">
-              Anda tidak memiliki izin untuk mengakses halaman analytics.
+              {t('access_denied_analytics_message')}
             </p>
             <Button onClick={() => router.push('/dashboard')}>
-              Kembali ke Dashboard
+              {t('back_to_dashboard')}
             </Button>
           </CardContent>
         </Card>
@@ -74,8 +76,7 @@ export default function AnalyticsPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        {/* Debug Navigation Test */}
-        {process.env.NODE_ENV === 'development' && <NavigationDebug />}
+        
         
         {/* Page Header */}
         <div className="mb-8">
@@ -84,9 +85,9 @@ export default function AnalyticsPage() {
               <BarChart3 className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Analytics</h1>
+              <h1 className="text-3xl font-bold text-gray-900">{t('analytics_page_title')}</h1>
               <p className="text-gray-600">
-                Analisis mendalam tentang performa pembelajaran dan sistem
+                {t('analytics_page_description')}
               </p>
             </div>
           </div>
@@ -105,14 +106,14 @@ export default function AnalyticsPage() {
               </div>
               <div>
                 <h3 className="font-medium text-gray-900">
-                  {user?.role_id === 3 && 'Dashboard Administrator'}
-                  {user?.role_id === 2 && 'Dashboard Instructor'}
-                  {user?.role_id === 1 && 'Dashboard Siswa'}
+                  {user?.role_id === 3 && t('dashboard_administrator')}
+                  {user?.role_id === 2 && t('dashboard_instructor')}
+                  {user?.role_id === 1 && t('dashboard_student')}
                 </h3>
                 <p className="text-sm text-gray-600 mt-1">
-                  {user?.role_id === 3 && 'Lihat statistik sistem, performa pengguna, dan metrik platform secara keseluruhan.'}
-                  {user?.role_id === 2 && 'Pantau performa kelas, analisis siswa, dan efektivitas pembelajaran.'}
-                  {user?.role_id === 1 && 'Lacak kemajuan belajar, performa tugas, dan pencapaian akademik Anda.'}
+                  {user?.role_id === 3 && t('admin_analytics_description')}
+                  {user?.role_id === 2 && t('instructor_analytics_description')}
+                  {user?.role_id === 1 && t('student_analytics_description')}
                 </p>
               </div>
             </div>
