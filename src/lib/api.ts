@@ -10,7 +10,14 @@ import {
   CourseCreateData,
   CourseDetail,
   CourseFilters, // Import from @/types
+  CourseMaterial,
+  CourseMaterialCreateData,
+  CourseSettings,
   CourseStatistics,
+  Enrollment,
+  EnrollmentCreateData,
+  EnrollmentDetail,
+  EnrollmentFilters,
   LoginCredentials, // Import from @/types
   PaginatedResponse,
   RegisterData,
@@ -720,6 +727,222 @@ class ApiClient {
         average_grade: 0,
       };
     }
+  }
+
+  // Enrollment Methods
+  async getCourseEnrollments(
+    courseId: number,
+    filters: Omit<EnrollmentFilters, 'course_id'> = {}
+  ): Promise<PaginatedResponse<EnrollmentDetail>> {
+    const response = await this.client.get<any>(
+      `/courses/${courseId}/enrollments`,
+      { params: filters }
+    );
+    
+    // Handle different response formats
+    if (Array.isArray(response.data)) {
+      return {
+        data: response.data,
+        pagination: {
+          total_items: response.data.length,
+          total_pages: 1,
+          current_page: 1,
+          page_size: response.data.length,
+        },
+      };
+    }
+    
+    return {
+      data: response.data.data || response.data.results || [],
+      pagination: {
+        total_items: response.data.total || response.data.totalResults || 0,
+        total_pages: response.data.last_page || response.data.totalPages || 1,
+        current_page: response.data.current_page || response.data.page || 1,
+        page_size: response.data.per_page || response.data.limit || 20,
+      },
+    };
+  }
+
+  async enrollStudent(
+    courseId: number,
+    enrollmentData: Omit<EnrollmentCreateData, 'course_id'>
+  ): Promise<Enrollment> {
+    const response = await this.client.post<any>(
+      `/courses/${courseId}/enrollments`,
+      {
+        studentId: enrollmentData.user_id,
+        enrollmentDate: new Date().toISOString(),
+        status: enrollmentData.status || 'active'
+      }
+    );
+    return response.data;
+  }
+
+  async enrollMultipleStudents(
+    courseId: number,
+    studentIds: number[],
+    status: 'active' | 'pending' = 'active'
+  ): Promise<Enrollment[]> {
+    const enrollments = await Promise.all(
+      studentIds.map(studentId => 
+        this.enrollStudent(courseId, { user_id: studentId, status })
+      )
+    );
+    return enrollments;
+  }
+
+  async updateEnrollment(
+    courseId: number,
+    enrollmentId: number,
+    updates: Partial<Pick<Enrollment, 'status'>>
+  ): Promise<Enrollment> {
+    const response = await this.client.put<any>(
+      `/courses/${courseId}/enrollments/${enrollmentId}`,
+      updates
+    );
+    return response.data;
+  }
+
+  async removeEnrollment(
+    courseId: number,
+    enrollmentId: number
+  ): Promise<void> {
+    await this.client.delete(`/courses/${courseId}/enrollments/${enrollmentId}`);
+  }
+
+  async getStudentEnrollment(
+    courseId: number,
+    studentId: number
+  ): Promise<Enrollment | null> {
+    try {
+      const response = await this.client.get<any>(
+        `/courses/${courseId}/enrollments/student/${studentId}`
+      );
+      return response.data;
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        return null;
+      }
+      throw error;
+    }
+  }
+
+  // Course Materials Methods
+  async getCourseMaterials(
+    courseId: number,
+    filters: { page?: number; limit?: number } = {}
+  ): Promise<PaginatedResponse<CourseMaterial>> {
+    const response = await this.client.get<any>(
+      `/courses/${courseId}/materials`,
+      { params: filters }
+    );
+    
+    if (Array.isArray(response.data)) {
+      return {
+        data: response.data,
+        pagination: {
+          total_items: response.data.length,
+          total_pages: 1,
+          current_page: 1,
+          page_size: response.data.length,
+        },
+      };
+    }
+    
+    return {
+      data: response.data.data || [],
+      pagination: {
+        total_items: response.data.total || 0,
+        total_pages: response.data.last_page || 1,
+        current_page: response.data.current_page || 1,
+        page_size: response.data.per_page || 20,
+      },
+    };
+  }
+
+  async createCourseMaterial(
+    courseId: number,
+    materialData: CourseMaterialCreateData
+  ): Promise<CourseMaterial> {
+    const formData = new FormData();
+    formData.append('type', 'material');
+    formData.append('title', materialData.title);
+    
+    if (materialData.description) {
+      formData.append('description', materialData.description);
+    }
+    
+    if (materialData.content) {
+      formData.append('content', materialData.content);
+    }
+    
+    if (materialData.video_url) {
+      formData.append('video_url', materialData.video_url);
+    }
+    
+    if (materialData.publish_date) {
+      formData.append('publish_date', materialData.publish_date);
+    }
+    
+    if (materialData.file) {
+      formData.append('file', materialData.file);
+    }
+
+    const response = await this.client.post<any>(
+      `/courses/${courseId}/content`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+    return response.data.material || response.data;
+  }
+
+  async updateCourseMaterial(
+    courseId: number,
+    materialId: number,
+    materialData: Partial<CourseMaterialCreateData>
+  ): Promise<CourseMaterial> {
+    const response = await this.client.put<any>(
+      `/courses/${courseId}/materials/${materialId}`,
+      materialData
+    );
+    return response.data;
+  }
+
+  async deleteCourseMaterial(
+    courseId: number,
+    materialId: number
+  ): Promise<void> {
+    await this.client.delete(`/courses/${courseId}/materials/${materialId}`);
+  }
+
+  // Course Settings Methods
+  async getCourseSettings(courseId: number): Promise<CourseSettings | null> {
+    try {
+      const response = await this.client.get<CourseSettings>(
+        `/courses/${courseId}/settings`
+      );
+      return response.data;
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        return null;
+      }
+      throw error;
+    }
+  }
+
+  async updateCourseSettings(
+    courseId: number,
+    settings: Partial<Omit<CourseSettings, 'id' | 'course_id' | 'created_at' | 'updated_at'>>
+  ): Promise<CourseSettings> {
+    const response = await this.client.put<CourseSettings>(
+      `/courses/${courseId}/settings`,
+      settings
+    );
+    return response.data;
   }
 
   // Utility Methods

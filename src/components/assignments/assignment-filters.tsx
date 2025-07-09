@@ -36,6 +36,28 @@ export const AssignmentFilters: React.FC<AssignmentFiltersProps> = ({ onFilterCh
     },
   });
 
+  // Helper functions to get display text
+  const getTypeDisplayText = (value: string) => {
+    switch (value) {
+      case 'all': return 'All Types';
+      case 'essay': return 'Essay';
+      case 'file_upload': return 'File Upload';
+      case 'quiz': return 'Quiz';
+      default: return 'Type';
+    }
+  };
+
+  const getStatusDisplayText = (value: string) => {
+    switch (value) {
+      case 'all': return 'All Statuses';
+      case 'pending': return 'Pending';
+      case 'submitted': return 'Submitted';
+      case 'graded': return 'Graded';
+      case 'overdue': return 'Overdue';
+      default: return 'Status';
+    }
+  };
+
   const handleFilter = (values: FiltersFormValues) => {
     const filters: Partial<AssignmentFiltersType> = {};
     if (values.search) filters.search = values.search;
@@ -63,10 +85,12 @@ export const AssignmentFilters: React.FC<AssignmentFiltersProps> = ({ onFilterCh
           name="type"
           render={({ field }) => (
             <FormItem>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Type" />
+                    <SelectValue placeholder="Type">
+                      {getTypeDisplayText(field.value)}
+                    </SelectValue>
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
@@ -84,10 +108,12 @@ export const AssignmentFilters: React.FC<AssignmentFiltersProps> = ({ onFilterCh
           name="status"
           render={({ field }) => (
             <FormItem>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Status" />
+                    <SelectValue placeholder="Status">
+                      {getStatusDisplayText(field.value)}
+                    </SelectValue>
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>

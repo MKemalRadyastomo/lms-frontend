@@ -287,6 +287,76 @@ export interface InstructorDashboard {
   }
 }
 
+// Enrollment Types
+export interface Enrollment {
+  id: number
+  course_id: number
+  user_id: number
+  enrollment_date: string
+  status: 'active' | 'inactive' | 'pending' | 'dropped'
+  created_at: string
+  updated_at?: string
+}
+
+export interface EnrollmentDetail extends Enrollment {
+  course?: Course
+  student?: User
+  student_name?: string
+  student_email?: string
+}
+
+export interface EnrollmentCreateData {
+  course_id: number
+  user_id: number
+  status?: 'active' | 'inactive' | 'pending'
+}
+
+export interface EnrollmentFilters {
+  course_id?: number
+  user_id?: number
+  status?: 'active' | 'inactive' | 'pending' | 'dropped'
+  search?: string
+  page?: number
+  limit?: number
+}
+
+// Course Material Types
+export interface CourseMaterial {
+  id: number
+  course_id: number
+  title: string
+  description?: string
+  content?: string
+  file_path?: string
+  video_url?: string
+  publish_date?: string
+  created_at: string
+  updated_at?: string
+}
+
+export interface CourseMaterialCreateData {
+  title: string
+  description?: string
+  content?: string
+  video_url?: string
+  publish_date?: string
+  file?: File
+}
+
+// Course Settings Types
+export interface CourseSettings {
+  id: number
+  course_id: number
+  auto_enrollment: boolean
+  max_students?: number
+  allow_late_submission: boolean
+  require_approval: boolean
+  email_notifications: boolean
+  discussion_enabled: boolean
+  created_at: string
+  updated_at?: string
+}
+
 // Navigation Types
 export interface NavItem {
   title: string
