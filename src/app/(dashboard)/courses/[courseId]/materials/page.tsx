@@ -138,7 +138,7 @@ const CourseMaterialsPage = () => {
 
   // Filter materials
   const filteredMaterials = courseContent?.filter(content => 
-    content.content_type === 'material' &&
+    content.type === 'material' &&
     (searchTerm === '' || 
      content.details?.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
      content.details?.description?.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -195,19 +195,19 @@ const CourseMaterialsPage = () => {
     createMaterialMutation.mutate(materialForm);
   };
 
-  const getMaterialIcon = (material: any) => {
-    if (material.details?.video_url) {
+  const getMaterialIcon = (material: Content) => {
+    if (material.type === 'material' && material.details?.video_url) {
       return <PlayCircle className="h-5 w-5 text-red-500" />;
     }
-    if (material.details?.file_path) {
+    if (material.type === 'material' && material.details?.file_path) {
       return <File className="h-5 w-5 text-blue-500" />;
     }
     return <FileText className="h-5 w-5 text-gray-500" />;
   };
 
-  const getMaterialType = (material: any) => {
-    if (material.details?.video_url) return 'Video';
-    if (material.details?.file_path) return 'File';
+  const getMaterialType = (material: Content) => {
+    if (material.type === 'material' && material.details?.video_url) return 'Video';
+    if (material.type === 'material' && material.details?.file_path) return 'File';
     return 'Teks';
   };
 
@@ -464,7 +464,7 @@ const CourseMaterialsPage = () => {
                               )}
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
-                                onClick={() => deleteMaterialMutation.mutate(material.content_id)}
+                                onClick={() => deleteMaterialMutation.mutate(material.id)}
                                 className="text-red-600 focus:text-red-600"
                               >
                                 <Trash2 className="h-4 w-4 mr-2" />
@@ -484,19 +484,19 @@ const CourseMaterialsPage = () => {
                       )}
                       
                       <div className="space-y-3">
-                        {material.details?.content && (
+                        {material.type === 'material' && material.details?.content && (
                           <div className="p-3 bg-gray-50 rounded-lg">
                             <p className="text-sm text-gray-700 line-clamp-4">
-                              {material.details.content}
+                              {(material.details as CourseMaterial).content}
                             </p>
                           </div>
                         )}
                         
-                        {material.details?.video_url && (
+                        {material.type === 'material' && material.details?.video_url && (
                           <div className="flex items-center gap-2 text-sm text-blue-600">
                             <PlayCircle className="h-4 w-4" />
                             <a 
-                              href={material.details.video_url} 
+                              href={(material.details as CourseMaterial).video_url} 
                               target="_blank" 
                               rel="noopener noreferrer"
                               className="hover:underline"
@@ -506,11 +506,11 @@ const CourseMaterialsPage = () => {
                           </div>
                         )}
                         
-                        {material.details?.file_path && (
+                        {material.type === 'material' && material.details?.file_path && (
                           <div className="flex items-center gap-2 text-sm text-green-600">
                             <File className="h-4 w-4" />
                             <a 
-                              href={material.details.file_path} 
+                              href={(material.details as CourseMaterial).file_path} 
                               target="_blank" 
                               rel="noopener noreferrer"
                               className="hover:underline"
@@ -524,8 +524,8 @@ const CourseMaterialsPage = () => {
                       <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
                         <div className="flex items-center gap-2 text-xs text-gray-500">
                           <Calendar className="h-3 w-3" />
-                          {material.details?.publish_date ? 
-                            new Date(material.details.publish_date).toLocaleDateString('id-ID') :
+                          {material.type === 'material' && material.details?.publish_date ? 
+                            new Date((material.details as CourseMaterial).publish_date).toLocaleDateString('id-ID') :
                             'Tidak ada tanggal'
                           }
                         </div>

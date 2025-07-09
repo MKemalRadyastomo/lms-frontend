@@ -1,19 +1,12 @@
 "use client";
 
-import {
-  BookOpen,
-  Home,
-  Settings,
-  Shield,
-  User as UserIcon,
-  Users,
-  X,
-  BarChart3,
-} from "lucide-react";
+import { BookOpen, Home, Settings, Shield, User as UserIcon, Users, X, BarChart3 } from "lucide-react";
+import { Branding } from "@/components/layout/Branding";
 import { EnhancedHeader } from "@/components/layout/EnhancedHeader";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
 import { AuthManager } from "@/lib/auth";
@@ -25,63 +18,29 @@ interface DashboardLayoutProps {
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(AuthManager.getUserData());
   const router = useRouter();
   const pathname = usePathname();
-
-  useEffect(() => {
-    console.log("Layout effect - checking auth");
-
-    // Check authentication
-    if (!AuthManager.isAuthenticated()) {
-      console.log("User not authenticated, redirecting to login...");
-      router.push("/login");
-      return;
-    }
-
-    // Get user data
-    const userData = AuthManager.getUserData();
-    console.log("Layout - User data from storage:", userData);
-
-    if (userData) {
-      setUser(userData);
-      setIsLoading(false);
-    } else {
-      // If no user data in storage, try to fetch it
-      const userId = AuthManager.getUserId();
-      console.log("No user data in storage, user ID:", userId);
-
-      if (userId) {
-        // We'll fetch user data in the dashboard page itself
-        // For now, create a minimal user object to prevent infinite loading
-        setUser({
-          id: userId,
-          username: "Loading...",
-          email: "loading@example.com",
-          role_id: 1,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        } as User);
-        setIsLoading(false);
-      }
-    }
-  }, [router]);
+  const { t } = useTranslation();
 
   // Memoize navigation items to prevent re-creation on every render
   const navigationItems = useMemo(() => {
     const baseItems = [
-      { name: "Dashboard", href: "/dashboard", icon: Home },
-      { name: "Kursus", href: "/courses", icon: BookOpen },
-      { name: "Tugas", href: "/assignments", icon: BookOpen }, // Added Assignments link
-      { name: "Analytics", href: "/analytics", icon: BarChart3 }, // Added Analytics link
-      { name: "Profil", href: "/profile", icon: UserIcon },
+      { name: t("dashboard"), href: "/dashboard", icon: Home },
+      { name: t("courses"), href: "/courses", icon: BookOpen },
+      { name: t("assignments"), href: "/assignments", icon: BookOpen },
+      { name: t("analytics"), href: "/analytics", icon: BarChart3 },
+      { name: t("profile"), href: "/profile", icon: UserIcon },
     ];
 
     // Add test page for development
     if (process.env.NODE_ENV === "development") {
-      baseItems.push({ name: "Test", href: "/test", icon: Settings });
-      baseItems.push({ name: "Nav Test", href: "/test-nav", icon: Settings });
+      baseItems.push({ name: t("test"), href: "/test", icon: Settings });
+      baseItems.push({
+        name: t("nav_test"),
+        href: "/test-nav",
+        icon: Settings,
+      });
     }
 
     // Add admin/instructor specific navigation
@@ -92,7 +51,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         AuthManager.hasRole("guru"))
     ) {
       baseItems.splice(-1, 0, {
-        name: "Pengguna",
+        name: t("users"),
         href: "/users",
         icon: Users,
       });
@@ -100,52 +59,41 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
     // Add admin navigation if user is admin
     if (user && AuthManager.hasRole("admin")) {
-      baseItems.push({ name: "Panel Admin", href: "/admin", icon: Shield });
+      baseItems.push({ name: t("admin_panel"), href: "/admin", icon: Shield });
     }
 
     return baseItems;
-  }, [user?.role_id]); // Only recalculate when user role changes
+  }, [user?.role_id, t]); // Only recalculate when user role changes or translation function changes
 
   // Memoize the active route check to prevent unnecessary re-renders
-  const isActiveRoute = useCallback((href: string) => {
-    const isActive = pathname === href;
-    return isActive;
-  }, [pathname]);
-
-
+  const isActiveRoute = useCallback(
+    (href: string) => {
+      const isActive = pathname === href;
+      return isActive;
+    },
+    [pathname]
+  );
 
   // Memoize sidebar toggle
   const toggleSidebar = useCallback(() => {
-    setIsSidebarOpen(prev => !prev);
+    setIsSidebarOpen((prev) => !prev);
   }, []);
 
   const closeSidebar = useCallback(() => {
     setIsSidebarOpen(false);
   }, []);
 
-  // Early returns after hooks
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div
+      className="min-h-screen bg-gray-50 flex"
+      data-testid="dashboard-layout"
+    >
       {/* Mobile sidebar overlay */}
       {isSidebarOpen && (
         <div
           className="fixed inset-0 z-40 bg-gray-900/50 backdrop-blur-sm lg:hidden transition-opacity duration-300"
           onClick={closeSidebar}
+          data-testid="dashboard-sidebar-overlay"
         />
       )}
 
@@ -156,24 +104,16 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         lg:relative lg:translate-x-0 lg:flex lg:flex-col
         ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
       `}
+        data-testid="dashboard-sidebar"
       >
         <div className="flex items-center justify-between h-16 px-6 border-b bg-gradient-to-r from-blue-50 to-indigo-50">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-sm">
-              <BookOpen className="h-6 w-6 text-white" />
-            </div>
-            <div>
-              <span className="text-xl font-bold text-gray-900">LMS</span>
-              <p className="text-xs text-gray-500 font-medium">
-                Learning Management
-              </p>
-            </div>
-          </div>
+          <Branding showText={true} />
           <Button
             variant="ghost"
             size="icon"
             onClick={closeSidebar}
             className="lg:hidden hover:bg-white/50 transition-colors duration-200"
+            data-testid="dashboard-sidebar-close-button"
           >
             <X className="h-5 w-5" />
           </Button>
@@ -182,7 +122,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         <nav className="mt-6 px-3 flex-1">
           <div className="px-3 mb-4">
             <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-              Navigation
+              {t("navigation")}
             </h3>
           </div>
           <div className="space-y-2">
@@ -203,6 +143,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                         : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                     }
                   `}
+                  data-testid={`dashboard-nav-link-${item.href.replace(
+                    "/",
+                    ""
+                  )}`}
                 >
                   {isActive && (
                     <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-600 rounded-r-lg" />
@@ -238,7 +182,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         {/* Bottom spacing */}
         <div className="mt-auto p-4">
           <div className="text-xs text-gray-400 text-center">
-            Learning Management System
+            {t("learning_management_system")}
           </div>
         </div>
       </div>
@@ -249,7 +193,12 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         <EnhancedHeader user={user} onMenuClick={toggleSidebar} />
 
         {/* Page content */}
-        <main className="flex-1 p-6 overflow-auto">{children}</main>
+        <main
+          className="flex-1 p-6 overflow-auto"
+          data-testid="dashboard-main-content"
+        >
+          {children}
+        </main>
       </div>
     </div>
   );

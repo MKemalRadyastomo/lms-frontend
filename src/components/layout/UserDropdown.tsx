@@ -24,7 +24,7 @@ import { AuthManager } from "@/lib/auth";
 import { User as UserType } from "@/types";
 
 interface UserDropdownProps {
-  user: UserType;
+  user: UserType | null;
   className?: string;
 }
 

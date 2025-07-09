@@ -9,7 +9,7 @@ import { User } from "@/types";
 import { cn } from "@/lib/utils";
 
 interface EnhancedHeaderProps {
-  user: User;
+  user: User | null;
   onMenuClick: () => void;
   className?: string;
 }

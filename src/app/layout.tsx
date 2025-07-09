@@ -1,10 +1,14 @@
+'use client'
+
 import { QueryProvider } from "@/components/providers/query-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
+import { I18nProvider } from "@/components/providers/i18n-provider";
 import { Toaster } from "@/components/ui/toaster";
 import ThemeInitializer from "@/components/theme/ThemeInitializer";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import i18n from '../../i18n';
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -27,18 +31,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={i18n.language} suppressHydrationWarning>
       <body className={inter.className}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="light"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <QueryProvider>{children}</QueryProvider>
-          <Toaster />
-          <ThemeInitializer />
-        </ThemeProvider>
+        <I18nProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="light"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <QueryProvider>{children}</QueryProvider>
+            <Toaster />
+            <ThemeInitializer />
+          </ThemeProvider>
+        </I18nProvider>
       </body>
     </html>
   );

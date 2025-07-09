@@ -89,7 +89,7 @@ export const AssignmentFilters: React.FC<AssignmentFiltersProps> = ({ onFilterCh
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Type">
-                      {getTypeDisplayText(field.value)}
+                      {getTypeDisplayText(field.value ?? '')}
                     </SelectValue>
                   </SelectTrigger>
                 </FormControl>
@@ -112,7 +112,7 @@ export const AssignmentFilters: React.FC<AssignmentFiltersProps> = ({ onFilterCh
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Status">
-                      {getStatusDisplayText(field.value)}
+                      {getStatusDisplayText(field.value ?? '')}
                     </SelectValue>
                   </SelectTrigger>
                 </FormControl>

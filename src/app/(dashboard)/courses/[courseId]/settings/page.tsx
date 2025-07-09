@@ -123,7 +123,7 @@ const CourseSettingsPage = () => {
     if (settings) {
       setSettingsForm({
         auto_enrollment: settings.auto_enrollment || false,
-        max_students: settings.max_students?.toString() || '',
+        max_students: String(settings.max_students || ''),
         allow_late_submission: settings.allow_late_submission ?? true,
         require_approval: settings.require_approval || false,
         email_notifications: settings.email_notifications ?? true,

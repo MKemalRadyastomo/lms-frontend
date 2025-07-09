@@ -82,12 +82,14 @@ export interface Content {
   id: number
   course_id: number
   title: string
-  type: 'lecture' | 'quiz' | 'assignment' | 'material'
+  type: 'lecture' | 'quiz' | 'assignment' | 'material' // This is content_type
   content_url?: string
   text_content?: string
   order: number
   created_at: string
   updated_at: string
+  // Add a union type for details based on the 'type'
+  details?: CourseMaterial | Assignment // Or other content types as needed
 }
 
 // Assignment Types
@@ -340,7 +342,7 @@ export interface CourseMaterialCreateData {
   content?: string
   video_url?: string
   publish_date?: string
-  file?: File
+  file?: File | null
 }
 
 // Course Settings Types
