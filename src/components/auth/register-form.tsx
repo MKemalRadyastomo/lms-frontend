@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
@@ -11,14 +11,17 @@ import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select' // Added import
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { registerSchema, type RegisterFormData } from '@/lib/validators'
 import { apiClient } from '@/lib/api'
+import { useTranslation } from 'react-i18next' // Added import
 
 export function RegisterForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const router = useRouter()
+  const { t } = useTranslation() // Added useTranslation hook
 
   const {
     register,
@@ -26,6 +29,7 @@ export function RegisterForm() {
     formState: { errors },
     setError,
     setValue,
+    control,
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
   })
@@ -186,19 +190,29 @@ export function RegisterForm() {
 
           <div className="space-y-2">
             <Label htmlFor="roleId">Role</Label>
-            <select
-              id="roleId"
-              {...register('role_id', { valueAsNumber: true })}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              disabled={rolesLoading}
-            >
-              <option value="">Select a role</option>
-              {roles?.map((role) => (
-                <option key={role.id} value={role.id}>
-                  {role.name.charAt(0).toUpperCase() + role.name.slice(1)}
-                </option>
-              ))}
-            </select>
+            <Controller
+              name="role_id"
+              control={control}
+              render={({ field }) => (
+                <Select
+                  onValueChange={(value) => field.onChange(parseInt(value))}
+                  value={field.value?.toString() || ''}
+                  disabled={rolesLoading}
+                  data-testid="register-role-select"
+                >
+                  <SelectTrigger id="roleId" className={errors.role_id ? 'border-red-500' : ''}>
+                    <SelectValue placeholder={t('select_a_role')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {roles?.map((role) => (
+                      <SelectItem key={role.id} value={role.id.toString()}>
+                        {t(role.name.toLowerCase())}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
             {errors.role_id && (
               <p className="text-sm text-red-500">{errors.role_id.message}</p>
             )}

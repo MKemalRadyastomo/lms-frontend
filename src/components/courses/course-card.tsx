@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu'
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuLabel } from '@/components/ui/dropdown-menu'
 import { Badge } from '@/components/ui/badge' // Added Badge import
 import { AuthManager } from '@/lib/auth'
 import { apiClient } from '@/lib/api'
@@ -40,7 +40,7 @@ export function CourseCard({ course, onEdit, onView }: CourseCardProps) {
     }
   }
 
-  const canEdit = AuthManager.hasRole('admin') || 
+  const canEdit = AuthManager.hasRole('admin') ||
     (AuthManager.hasRole('guru') && currentUser?.id === course.teacher_id)
 
   const getPrivacyLabel = (privacy: string) => {
@@ -57,12 +57,12 @@ export function CourseCard({ course, onEdit, onView }: CourseCardProps) {
               {t('by')} {course.teacher_name || t('teacher')}
             </CardDescription>
           </div>
-          
+
           <div className="flex items-center space-x-2">
             <Badge variant={course.privacy === 'public' ? 'success' : 'info'} data-testid={`course-card-privacy-badge-${course.id}`}>
               {getPrivacyLabel(course.privacy)}
             </Badge>
-            
+
             {canEdit && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -76,6 +76,8 @@ export function CourseCard({ course, onEdit, onView }: CourseCardProps) {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuLabel>{t('actions')}</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => onEdit?.(course)} data-testid={`course-card-edit-action-${course.id}`}>
                     <Edit className="mr-3 h-4 w-4" />
                     {t('edit_course_action')}
@@ -95,7 +97,7 @@ export function CourseCard({ course, onEdit, onView }: CourseCardProps) {
           </div>
         </div>
       </CardHeader>
-      
+
       <CardContent>
         <div className="space-y-4">
           {/* Description */}
@@ -104,7 +106,7 @@ export function CourseCard({ course, onEdit, onView }: CourseCardProps) {
               {course.description}
             </p>
           )}
-          
+
           {/* Course Code */}
           <div className="bg-gray-50 rounded-lg p-3">
             <div className="flex items-center justify-between">
@@ -122,7 +124,7 @@ export function CourseCard({ course, onEdit, onView }: CourseCardProps) {
               </Button>
             </div>
           </div>
-          
+
           {/* Course Stats */}
           <div className="grid grid-cols-3 gap-4 pt-2">
             <div className="text-center">
@@ -130,17 +132,17 @@ export function CourseCard({ course, onEdit, onView }: CourseCardProps) {
                 <Users className="h-4 w-4 text-blue-600" />
               </div>
               <p className="text-xs text-gray-500">{t('students')}</p>
-              <p className="text-sm font-semibold">-</p>
+              <p className="text-sm font-semibold">{t('not_available_abbr')}</p>
             </div>
-            
+
             <div className="text-center">
               <div className="flex items-center justify-center w-8 h-8 bg-green-100 rounded-full mx-auto mb-1">
                 <BookOpen className="h-4 w-4 text-green-600" />
               </div>
               <p className="text-xs text-gray-500">{t('materials')}</p>
-              <p className="text-sm font-semibold">-</p>
+              <p className="text-sm font-semibold">{t('not_available_abbr')}</p>
             </div>
-            
+
             <div className="text-center">
               <div className="flex items-center justify-center w-8 h-8 bg-orange-100 rounded-full mx-auto mb-1">
                 <Calendar className="h-4 w-4 text-orange-600" />
@@ -151,7 +153,7 @@ export function CourseCard({ course, onEdit, onView }: CourseCardProps) {
               </p>
             </div>
           </div>
-          
+
           {/* Action Buttons */}
           <div className="flex space-x-2 pt-2">
             <Button
@@ -164,7 +166,7 @@ export function CourseCard({ course, onEdit, onView }: CourseCardProps) {
               <Eye className="mr-2 h-4 w-4" />
               {t('view_course')}
             </Button>
-            
+
             {canEdit && (
               <Button
                 variant="outline"

@@ -3,6 +3,7 @@
 import { BookOpen, Home, Settings, Shield, User as UserIcon, Users, X, BarChart3 } from "lucide-react";
 import { Branding } from "@/components/layout/Branding";
 import { EnhancedHeader } from "@/components/layout/EnhancedHeader";
+import { DynamicBreadcrumb } from "@/components/layout/DynamicBreadcrumb";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -202,9 +203,14 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         {/* Enhanced Header with scroll behavior */}
         <EnhancedHeader user={user} onMenuClick={toggleSidebar} />
 
+        {/* Breadcrumb Navigation */}
+        <div className="bg-white border-b border-gray-200 px-6 py-3">
+          <DynamicBreadcrumb />
+        </div>
+
         {/* Page content */}
         <main
-          className="flex-1 p-6 overflow-auto"
+          className="flex-1 p-6 overflow-auto bg-gray-50"
           data-testid="dashboard-main-content"
         >
           {children}

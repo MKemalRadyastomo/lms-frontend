@@ -1,6 +1,5 @@
-'use client';
 import React from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { AssignmentFilters as AssignmentFiltersType } from '@/types';
@@ -39,27 +38,7 @@ export const AssignmentFilters: React.FC<AssignmentFiltersProps> = ({ onFilterCh
     },
   });
 
-  // Helper functions to get display text
-  const getTypeDisplayText = (value: string) => {
-    switch (value) {
-      case 'all': return t('all_types');
-      case 'essay': return t('essay');
-      case 'file_upload': return t('file_upload');
-      case 'quiz': return t('quiz');
-      default: return t('type');
-    }
-  };
-
-  const getStatusDisplayText = (value: string) => {
-    switch (value) {
-      case 'all': return t('all_statuses');
-      case 'pending': return t('pending');
-      case 'submitted': return t('submitted');
-      case 'graded': return t('graded');
-      case 'overdue': return t('overdue');
-      default: return t('status');
-    }
-  };
+  const { control, handleSubmit } = form;
 
   const handleFilter = (values: FiltersFormValues) => {
     const filters: Partial<AssignmentFiltersType> = {};
@@ -71,66 +50,74 @@ export const AssignmentFilters: React.FC<AssignmentFiltersProps> = ({ onFilterCh
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleFilter)} className="flex items-center space-x-4 p-4 bg-muted rounded-lg">
+      <form onSubmit={handleSubmit(handleFilter)} className="flex items-center space-x-4 p-4 bg-muted rounded-lg">
         <FormField
-          control={form.control}
+          control={control}
           name="search"
           render={({ field }) => (
             <FormItem>
               <FormControl>
-                <Input placeholder={t('search_assignments')} {...field} />
+                <Input placeholder={t('search_assignments')} {...field} data-testid="assignment-search-input" />
               </FormControl>
             </FormItem>
           )}
         />
         <FormField
-          control={form.control}
+          control={control}
           name="type"
           render={({ field }) => (
             <FormItem>
-              <Select onValueChange={field.onChange} value={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder={t('type')}>
-                      {getTypeDisplayText(field.value ?? '')}
-                    </SelectValue>
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="all">{t('all_types')}</SelectItem>
-                  <SelectItem value="essay">{t('essay')}</SelectItem>
-                  <SelectItem value="file_upload">{t('file_upload')}</SelectItem>
-                  <SelectItem value="quiz">{t('quiz')}</SelectItem>
-                </SelectContent>
-              </Select>
+              <Controller
+                name="type"
+                control={control}
+                render={({ field }) => (
+                  <Select onValueChange={field.onChange} value={field.value} data-testid="assignment-type-select">
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder={t('type')} />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="all">{t('all_types')}</SelectItem>
+                      <SelectItem value="essay">{t('essay')}</SelectItem>
+                      <SelectItem value="file_upload">{t('file_upload')}</SelectItem>
+                      <SelectItem value="quiz">{t('quiz')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
             </FormItem>
           )}
         />
         <FormField
-          control={form.control}
+          control={control}
           name="status"
           render={({ field }) => (
             <FormItem>
-              <Select onValueChange={field.onChange} value={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder={t('status')}>
-                      {getStatusDisplayText(field.value ?? '')}
-                    </SelectValue>
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="all">{t('all_statuses')}</SelectItem>
-                  <SelectItem value="pending">{t('pending')}</SelectItem>
-                  <SelectItem value="submitted">{t('submitted')}</SelectItem>
-                  <SelectItem value="graded">{t('graded')}</SelectItem>
-                  <SelectItem value="overdue">{t('overdue')}</SelectItem>
-                </SelectContent>
-              </Select>
+              <Controller
+                name="status"
+                control={control}
+                render={({ field }) => (
+                  <Select onValueChange={field.onChange} value={field.value} data-testid="assignment-status-select">
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder={t('status')} />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="all">{t('all_statuses')}</SelectItem>
+                      <SelectItem value="pending">{t('pending')}</SelectItem>
+                      <SelectItem value="submitted">{t('submitted')}</SelectItem>
+                      <SelectItem value="graded">{t('graded')}</SelectItem>
+                      <SelectItem value="overdue">{t('overdue')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
             </FormItem>
           )}
         />
-        <Button type="submit">{t('filter')}</Button>
+        <Button type="submit" data-testid="assignment-filter-button">{t('filter')}</Button>
       </form>
     </Form>
   );

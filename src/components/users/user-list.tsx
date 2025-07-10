@@ -17,11 +17,13 @@ import {
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select' // Added import
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { UserForm } from './user-form'
 import { apiClient } from '@/lib/api'
 import { AuthManager } from '@/lib/auth'
 import { User, UserFilters } from '@/types'
+import { useTranslation } from 'react-i18next' // Added import
 
 interface UserListProps {
   showCreateForm?: boolean
@@ -35,6 +37,7 @@ export function UserList({ showCreateForm = false, onUserSelect }: UserListProps
   const [roleFilter, setRoleFilter] = useState<string>('')
   const [page, setPage] = useState(1)
   const queryClient = useQueryClient()
+  const { t } = useTranslation() // Added useTranslation hook
 
   const filters: UserFilters & { page: number; limit: number } = {
     page,
@@ -164,16 +167,20 @@ export function UserList({ showCreateForm = false, onUserSelect }: UserListProps
               </div>
             </div>
             <div className="flex gap-2">
-              <select
+              <Select
                 value={roleFilter}
-                onChange={(e) => setRoleFilter(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                onValueChange={(value) => setRoleFilter(value === 'all' ? '' : value)}
               >
-                <option value="">Semua Peran</option>
-                <option value="siswa">Siswa</option>
-                <option value="guru">Guru</option>
-                <option value="admin">Administrator</option>
-              </select>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder={t('all_roles')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t('all_roles')}</SelectItem> {/* Changed value to "all" */}
+                  <SelectItem value="siswa">{t('student')}</SelectItem>
+                  <SelectItem value="guru">{t('teacher')}</SelectItem>
+                  <SelectItem value="admin">{t('administrator')}</SelectItem>
+                </SelectContent>
+              </Select>
               <Button variant="outline" size="icon">
                 <Filter className="h-4 w-4" />
               </Button>

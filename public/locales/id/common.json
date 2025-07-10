@@ -19,6 +19,7 @@
   "description": "Deskripsi",
   "privacy": "Privasi",
   "select_privacy_option": "Pilih opsi privasi",
+  "select_privacy_placeholder": "Pilih opsi privasi",
   "private_course_desc": "Privat - Hanya siswa yang diundang",
   "public_course_desc": "Publik - Semua siswa dapat bergabung",
   "course_code_info": "📝 Kode kursus akan dibuat secara otomatis setelah kursus dibuat.",
@@ -134,5 +135,14 @@
   "total_created": "Total Dibuat",
   "system_health": "Kesehatan Sistem",
   "response_time_ms": "{{time}}ms",
-  "response_time": "Waktu Respons"
+  "response_time": "Waktu Respons",
+  "new": "Baru",
+  "edit": "Edit",
+  "create": "Buat",
+  "settings": "Pengaturan",
+  "course_detail": "Detail Kursus",
+  "assignment_detail": "Detail Tugas",
+  "user_detail": "Detail Pengguna",
+  "detail": "Detail",
+  "actions": "Aksi"
 }

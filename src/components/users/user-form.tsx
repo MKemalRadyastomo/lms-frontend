@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useState, useEffect } from 'react'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { X, Loader2, Upload } from 'lucide-react'
@@ -10,10 +10,12 @@ import { z } from 'zod'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select' // Added import
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { apiClient } from '@/lib/api'
 import { AuthManager } from '@/lib/auth'
 import { User } from '@/types'
+import { useTranslation } from 'react-i18next' // Added import
 
 const userFormSchema = z.object({
   username: z.string().min(3, 'Nama pengguna harus minimal 3 karakter'),
@@ -33,12 +35,13 @@ interface UserFormProps {
 }
 
 const roleOptions = [
-  { value: 1, label: 'Siswa' },
-  { value: 2, label: 'Guru' },
-  { value: 3, label: 'Administrator' },
+  { value: 1, label: 'student' }, // Use translation key
+  { value: 2, label: 'teacher' }, // Use translation key
+  { value: 3, label: 'administrator' }, // Use translation key
 ]
 
 export function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
+  const { t } = useTranslation() // Added useTranslation hook
   const [profileImage, setProfileImage] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(
     user?.profile_picture_url || null
@@ -62,7 +65,7 @@ export function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
           </p>
           {onCancel && (
             <Button onClick={onCancel} variant="outline">
-              Go Back
+              {t('cancel')}
             </Button>
           )}
         </CardContent>
@@ -76,6 +79,9 @@ export function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
     formState: { errors },
     setError,
     reset,
+    setValue,
+    watch,
+    control, // Added control for Controller
   } = useForm<UserFormData>({
     resolver: zodResolver(userFormSchema),
     defaultValues: user ? {
@@ -330,20 +336,31 @@ export function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
           {/* Role */}
           <div className="space-y-2">
             <Label htmlFor="role_id">Peran *</Label>
-            <select
-              id="role_id"
-              {...register('role_id', { valueAsNumber: true })}
-              className={`
-                w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-                ${errors.role_id ? 'border-red-500' : 'border-gray-300'}
-              `}
-            >
-              {roleOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+            <Controller
+              name="role_id"
+              control={control}
+              render={({ field }) => (
+                <Select
+                  onValueChange={(value) => field.onChange(parseInt(value))}
+                  value={field.value?.toString() || ''}
+                  data-testid="role-select"
+                >
+                  <SelectTrigger
+                    id="role_id"
+                    className={errors.role_id ? 'border-red-500' : ''}
+                  >
+                    <SelectValue placeholder={t('select_role_placeholder')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {roleOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value.toString()}>
+                        {t(option.label)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
             {errors.role_id && (
               <p className="text-sm text-red-500">{errors.role_id.message}</p>
             )}

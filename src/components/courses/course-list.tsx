@@ -14,12 +14,14 @@ import {
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select' // Added import
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { CourseForm } from './course-form'
 import { CourseCard } from './course-card'
 import { apiClient } from '@/lib/api'
 import { AuthManager } from '@/lib/auth'
 import { Course, CourseFilters } from '@/types'
+import { useTranslation } from 'react-i18next' // Added import
 
 interface CourseListProps {
   showCreateForm?: boolean
@@ -37,6 +39,7 @@ export function CourseList({ showCreateForm = false, onCourseSelect }: CourseLis
   const queryClient = useQueryClient()
   const currentUser = AuthManager.getUserData()
   const router = useRouter()
+  const { t } = useTranslation() // Added useTranslation hook
 
   const filters: CourseFilters & { page: number; limit: number } = {
     page,
@@ -145,15 +148,19 @@ export function CourseList({ showCreateForm = false, onCourseSelect }: CourseLis
               </div>
             </div>
             <div className="flex gap-2">
-              <select
+              <Select
                 value={privacyFilter}
-                onChange={(e) => setPrivacyFilter(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                onValueChange={(value) => setPrivacyFilter(value === 'all' ? '' : value)}
               >
-                <option value="">Semua Privasi</option>
-                <option value="private">Privat</option>
-                <option value="public">Publik</option>
-              </select>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder={t('all_privacy')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t('all_privacy')}</SelectItem> {/* Changed value to "all" */}
+                  <SelectItem value="private">{t('private')}</SelectItem>
+                  <SelectItem value="public">{t('public')}</SelectItem>
+                </SelectContent>
+              </Select>
               <Button variant="outline" size="icon">
                 <Filter className="h-4 w-4" />
               </Button>
