@@ -10,13 +10,18 @@ import { AssignmentCard } from '@/components/assignments/assignment-card';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { BookOpen, AlertCircle, GraduationCap } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { BookOpen, AlertCircle, GraduationCap, Plus, Filter } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { PageWrapper } from '@/components/layout/PageWrapper';
 import Link from 'next/link';
+import { useTranslation } from 'react-i18next';
 
 const AssignmentsPage = () => {
   const { user, isLoading: isUserLoading } = useAuth();
   const [selectedCourse, setSelectedCourse] = useState<number | null>(null);
+  const [showFilters, setShowFilters] = useState(false);
+  const { t } = useTranslation();
 
   const userRole = user ? (user.role_id === 1 ? 'student' : user.role_id === 2 ? 'teacher' : 'admin') : 'student';
 
@@ -76,36 +81,45 @@ const AssignmentsPage = () => {
 
   if (!allAssignments || allAssignments.length === 0) {
     return (
-      <div className="container mx-auto py-8">
+      <PageWrapper
+        title={t('assignments')}
+        description={t('assignment_page_description')}
+        icon={BookOpen}
+        iconColor="blue"
+      >
         <div className="text-center py-12">
           <div className="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
             <BookOpen className="h-8 w-8 text-gray-400" />
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Belum Ada Tugas</h3>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">{t('no_assignments_title')}</h3>
           <p className="text-gray-600 mb-4">
             {userRole === 'student' 
-              ? 'Belum ada tugas yang tersedia dari semua kursus Anda.'
-              : 'Belum ada tugas yang dibuat. Pilih kursus untuk membuat tugas pertama.'
+              ? t('no_assignments_student_message')
+              : t('no_assignments_teacher_message')
             }
           </p>
           {courses?.data && courses.data.length > 0 && (userRole === 'teacher' || userRole === 'admin') && (
             <div className="mt-6">
-              <h4 className="text-sm font-medium text-gray-700 mb-3">Pilih kursus untuk membuat tugas:</h4>
+              <h4 className="text-sm font-medium text-gray-700 mb-3">{t('select_course_to_create_assignment')}</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-4xl mx-auto">
                 {courses.data.map((course: Course) => (
-                  <Card key={course.id} className="cursor-pointer hover:shadow-lg transition-shadow">
+                  <Card key={course.id} className="group cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-blue-200">
                     <CardHeader className="pb-3">
                       <div className="flex items-center gap-2">
-                        <GraduationCap className="h-5 w-5 text-blue-600" />
-                        <CardTitle className="text-base">{course.name}</CardTitle>
+                        <div className="p-2 bg-blue-100 text-blue-600 rounded-lg group-hover:bg-blue-200 transition-colors">
+                          <GraduationCap className="h-4 w-4" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-base group-hover:text-blue-600 transition-colors">{course.name}</CardTitle>
+                          <CardDescription className="text-sm">{course.code}</CardDescription>
+                        </div>
                       </div>
-                      <CardDescription className="text-sm">{course.code}</CardDescription>
                     </CardHeader>
                     <CardContent>
                       <Link href={`/courses/${course.id}/assignments/create`} className="inline-block w-full">
                         <div className="bg-blue-50 hover:bg-blue-100 transition-colors p-3 rounded-lg text-center">
-                          <BookOpen className="h-4 w-4 mx-auto mb-1 text-blue-600" />
-                          <span className="text-sm font-medium text-blue-700">Buat Tugas</span>
+                          <Plus className="h-4 w-4 mx-auto mb-1 text-blue-600" />
+                          <span className="text-sm font-medium text-blue-700">{t('create_assignment')}</span>
                         </div>
                       </Link>
                     </CardContent>
@@ -115,20 +129,43 @@ const AssignmentsPage = () => {
             </div>
           )}
         </div>
-      </div>
+      </PageWrapper>
     );
   }
 
   return (
-    <div className="container mx-auto py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Semua Tugas</h1>
-        <p className="text-gray-600">Tugas dari semua kursus yang Anda ikuti</p>
-      </div>
+    <PageWrapper
+      title={t('assignments')}
+      description={t('assignment_page_description')}
+      icon={BookOpen}
+      iconColor="blue"
+      badge={`${allAssignments.length} ${t('assignments').toLowerCase()}`}
+      actions={
+        <Button
+          variant="outline"
+          onClick={() => setShowFilters(!showFilters)}
+          className="flex items-center gap-2"
+        >
+          <Filter className="h-4 w-4" />
+          {t('filters')}
+        </Button>
+      }
+    >
+      {/* Collapsible Filters */}
+      <AnimatePresence>
+        {showFilters && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="mb-6"
+          >
+            <AssignmentFilters onFilterChange={handleFilterChange} />
+          </motion.div>
+        )}
+      </AnimatePresence>
       
-      <AssignmentFilters onFilterChange={handleFilterChange} />
-      
-      <div className="mt-8">
+      <div className="space-y-6">
         <motion.div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
           <AnimatePresence>
             {allAssignments.map((assignment: Assignment, index: number) => (
@@ -154,7 +191,7 @@ const AssignmentsPage = () => {
           </AnimatePresence>
         </motion.div>
       </div>
-    </div>
+    </PageWrapper>
   );
 };
 

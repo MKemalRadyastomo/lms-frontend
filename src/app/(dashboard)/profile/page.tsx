@@ -14,14 +14,18 @@ import { apiClient } from "@/lib/api";
 import { AuthManager } from "@/lib/auth";
 import { User } from "@/types";
 import { ProfileStats } from "@/types/profile";
-import { RefreshCw, Settings, Shield } from "lucide-react";
+import { RefreshCw, Settings, Shield, User as UserIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useToast } from "@/components/ui/use-toast";
+import { PageWrapper } from "@/components/layout/PageWrapper";
+import { useTranslation } from "react-i18next";
 
 export default function ProfilePage() {
   const { toast: uiToast } = useToast();
+  const { t } = useTranslation();
+  
   // State management
   const [user, setUser] = useState<User | null>(null);
   const [profileStats, setProfileStats] = useState<ProfileStats | null>(null);
@@ -275,51 +279,49 @@ function ProfilePageContent({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-6xl mx-auto p-6 space-y-8">
-        {/* Page Header */}
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Profil Saya</h1>
-            <p className="text-gray-600 mt-1">
-              Kelola informasi profil dan pengaturan akun Anda
-            </p>
-          </div>
+    <PageWrapper
+      title="My Profile"
+      description="Manage your profile information and account settings"
+      icon={UserIcon}
+      iconColor="green"
+      variant="simple"
+      actions={
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            onClick={refreshProfile}
+            disabled={isStatsLoading}
+            className="flex items-center"
+          >
+            <RefreshCw
+              className={`h-4 w-4 mr-2 ${
+                isStatsLoading ? "animate-spin" : ""
+              }`}
+            />
+            Refresh
+          </Button>
 
-          <div className="flex flex-wrap gap-2">
-            <Button
-              variant="outline"
-              onClick={refreshProfile}
-              disabled={isStatsLoading}
-              className="flex items-center"
-            >
-              <RefreshCw
-                className={`h-4 w-4 mr-2 ${
-                  isStatsLoading ? "animate-spin" : ""
-                }`}
-              />
-              Refresh
-            </Button>
+          <Button
+            variant="outline"
+            onClick={() => setIsPasswordModalOpen(true)}
+            className="flex items-center"
+          >
+            <Shield className="h-4 w-4 mr-2" />
+            Change Password
+          </Button>
 
-            <Button
-              variant="outline"
-              onClick={() => setIsPasswordModalOpen(true)}
-              className="flex items-center"
-            >
-              <Shield className="h-4 w-4 mr-2" />
-              Ubah Password
-            </Button>
-
-            <Button
-              variant="outline"
-              onClick={() => router.push("/profile/settings")}
-              className="flex items-center"
-            >
-              <Settings className="h-4 w-4 mr-2" />
-              Pengaturan
-            </Button>
-          </div>
+          <Button
+            variant="outline"
+            onClick={() => router.push("/profile/settings")}
+            className="flex items-center"
+          >
+            <Settings className="h-4 w-4 mr-2" />
+            Settings
+          </Button>
         </div>
+      }
+    >
+      <div className="space-y-8">
 
         {/* Profile Header */}
         <ProfileHeader
@@ -397,6 +399,6 @@ function ProfilePageContent({
           userId={user.id.toString()}
         />
       </div>
-    </div>
+    </PageWrapper>
   );
 }

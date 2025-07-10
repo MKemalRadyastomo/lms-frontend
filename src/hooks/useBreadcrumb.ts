@@ -7,11 +7,26 @@ import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 // Note: Import toast in components that use this hook if needed
 
+// Utility function to truncate text at word boundaries
+function truncateText(text: string, maxLength: number): string {
+  if (text.length <= maxLength) return text;
+  
+  // Find the last space before the maximum length
+  const truncated = text.substring(0, maxLength);
+  const lastSpaceIndex = truncated.lastIndexOf(' ');
+  
+  // If there's a space, cut at that point, otherwise use the max length
+  const cutPoint = lastSpaceIndex > maxLength * 0.7 ? lastSpaceIndex : maxLength;
+  
+  return text.substring(0, cutPoint).trim() + '...';
+}
+
 export interface BreadcrumbItem {
   label: string;
   href: string;
   isActive?: boolean;
   isLoading?: boolean;
+  fullLabel?: string; // Original full text for tooltips
 }
 
 export function useBreadcrumb(): BreadcrumbItem[] {
@@ -30,7 +45,7 @@ export function useBreadcrumb(): BreadcrumbItem[] {
       const segment = pathSegments[i];
       const previousSegment = pathSegments[i - 1];
 
-      if (segment.match(/^\\d+$/)) {
+      if (segment.match(/^\d+$/)) {
         segments.push({
           segment,
           previousSegment,
@@ -250,30 +265,45 @@ export function useBreadcrumb(): BreadcrumbItem[] {
 
         default:
           // Handle dynamic segments (IDs, etc.)
-          if (segment.match(/^\\d+$/)) {
+          if (segment.match(/^\d+$/)) {
             const previousSegment = pathSegments[i - 1];
             const id = parseInt(segment);
 
             if (previousSegment === "courses") {
+              const courseName = coursesData?.[id] || t("course_detail");
+              // Truncate long course names for breadcrumbs
+              const truncatedName = truncateText(courseName, 25);
+              
               items.push({
-                label: coursesData?.[id] || t("course_detail"),
+                label: truncatedName,
                 href: href,
                 isActive: isActive,
                 isLoading: coursesLoading,
+                fullLabel: courseName !== truncatedName ? courseName : undefined,
               });
             } else if (previousSegment === "assignments") {
+              const assignmentTitle = assignmentsData?.[id] || t("assignment_detail");
+              // Truncate long assignment titles for breadcrumbs
+              const truncatedTitle = truncateText(assignmentTitle, 30);
+              
               items.push({
-                label: assignmentsData?.[id] || t("assignment_detail"),
+                label: truncatedTitle,
                 href: href,
                 isActive: isActive,
                 isLoading: assignmentsLoading,
+                fullLabel: assignmentTitle !== truncatedTitle ? assignmentTitle : undefined,
               });
             } else if (previousSegment === "users") {
+              const userName = usersData?.[id] || t("user_detail");
+              // Truncate long user names for breadcrumbs
+              const truncatedUserName = truncateText(userName, 20);
+              
               items.push({
-                label: usersData?.[id] || t("user_detail"),
+                label: truncatedUserName,
                 href: href,
                 isActive: isActive,
                 isLoading: usersLoading,
+                fullLabel: userName !== truncatedUserName ? userName : undefined,
               });
             } else {
               items.push({

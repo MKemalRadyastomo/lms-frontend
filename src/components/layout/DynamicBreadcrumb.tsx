@@ -41,12 +41,21 @@ export function DynamicBreadcrumb({ customItems, className }: DynamicBreadcrumbP
                     <Skeleton className="h-4 w-20" />
                   </div>
                 ) : (
-                  item.label
+                  <span 
+                    title={item.fullLabel || item.label}
+                    className={item.fullLabel ? 'cursor-help border-b border-dotted border-gray-400' : ''}
+                  >
+                    {item.label}
+                  </span>
                 )}
               </BreadcrumbPage>
             ) : (
               <BreadcrumbLink asChild>
-                <Link href={item.href}>
+                <Link 
+                  href={item.href}
+                  title={item.fullLabel || item.label}
+                  className={item.fullLabel ? 'border-b border-dotted border-gray-400' : ''}
+                >
                   {item.isLoading ? (
                     <div className="flex items-center gap-2">
                       <Loader2 className="h-3 w-3 animate-spin" />

@@ -8,17 +8,19 @@ import { useAuth } from '@/hooks/useAuth';
 import { AuthManager } from '@/lib/auth';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { BookOpen } from 'lucide-react';
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
-import { SlashIcon } from 'lucide-react';
+import { BookOpen, Plus, Filter, ArrowLeft } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api';
 import { useTranslation } from 'react-i18next';
+import { PageWrapper } from '@/components/layout/PageWrapper';
+import { Badge } from '@/components/ui/badge';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const CourseAssignmentsPage = () => {
   const params = useParams();
   const { user, isLoading: isUserLoading } = useAuth();
   const [isNavigating, setIsNavigating] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
   const router = useRouter();
   const { t } = useTranslation();
   const courseId = Number(params.courseId);
@@ -49,67 +51,71 @@ const CourseAssignmentsPage = () => {
   }
 
   return (
-    <div className="container mx-auto py-8">
-      {/* Breadcrumbs */}
-      <Breadcrumb className="mb-6">
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-              <Link href="/dashboard">{t('home')}</Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator>
-            <SlashIcon />
-          </BreadcrumbSeparator>
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-              <Link href={`/courses/${courseId}`}>{course.name}</Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator>
-            <SlashIcon />
-          </BreadcrumbSeparator>
-          <BreadcrumbItem>
-            <BreadcrumbPage>{t('assignments')}</BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
-
-      {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">{t('course_assignments', { courseName: course.name })}</h1>
-          <p className="text-gray-600 mt-1">{t('manage_assignments_description')}</p>
-        </div>
-        {(AuthManager.hasRole('teacher') || AuthManager.hasRole('admin') || AuthManager.hasRole('guru')) && (
-          <Button 
-            onClick={handleCreateAssignment}
-            disabled={isNavigating}
-            className="gap-2 min-w-[140px]"
+    <PageWrapper
+      title={`${course.name} Assignments`}
+      description={`Manage assignments for ${course.name} course`}
+      icon={BookOpen}
+      iconColor="blue"
+      badge={course.code}
+      actions={
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() => router.back()}
+            className="flex items-center gap-2"
           >
-            {isNavigating ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                {t('loading')}
-              </>
-            ) : (
-              <>
-                <BookOpen className="h-4 w-4" />
-                {t('create_new_assignment')}
-              </>
-            )}
+            <ArrowLeft className="h-4 w-4" />
+            Back to Course
           </Button>
+          <Button
+            variant="outline"
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center gap-2"
+          >
+            <Filter className="h-4 w-4" />
+            {showFilters ? 'Hide Filters' : 'Show Filters'}
+          </Button>
+          {(AuthManager.hasRole('teacher') || AuthManager.hasRole('admin') || AuthManager.hasRole('guru')) && (
+            <Button 
+              onClick={handleCreateAssignment}
+              disabled={isNavigating}
+              className="flex items-center gap-2"
+            >
+              {isNavigating ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  Creating...
+                </>
+              ) : (
+                <>
+                  <Plus className="h-4 w-4" />
+                  Create Assignment
+                </>
+              )}
+            </Button>
+          )}
+        </div>
+      }
+    >
+      {/* Collapsible Filters */}
+      <AnimatePresence>
+        {showFilters && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="mb-6"
+          >
+            <div className="bg-white rounded-lg border p-6 shadow-sm">
+              <AssignmentFilters onFilterChange={handleFilterChange} />
+            </div>
+          </motion.div>
         )}
-      </div>
-      
-      {/* Filters Section */}
-      <div className="bg-white rounded-lg border p-6 shadow-sm mb-8">
-        <AssignmentFilters onFilterChange={handleFilterChange} />
-      </div>
+      </AnimatePresence>
 
       {/* Assignments List */}
       <AssignmentList courseId={courseId} userRole={userRole} />
-    </div>
+    </PageWrapper>
   );
 };
 

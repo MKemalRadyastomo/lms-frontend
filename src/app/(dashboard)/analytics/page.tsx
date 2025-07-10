@@ -4,12 +4,13 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { AuthManager } from '@/lib/auth';
 import { AnalyticsDashboard } from '@/components/analytics/AnalyticsDashboard';
+import { PageWrapper } from '@/components/layout/PageWrapper';
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { BarChart3, TrendingUp, Users, BookOpen, Shield, AlertTriangle } from 'lucide-react';
+import { BarChart3, TrendingUp, Users, BookOpen, Shield, AlertTriangle, RefreshCw } from 'lucide-react';
 import { User } from '@/types';
-import { useTranslation } from 'react-i18next'; // Added import
+import { useTranslation } from 'react-i18next';
 
 export default function AnalyticsPage() {
   const [user, setUser] = useState<User | null>(null);
@@ -73,60 +74,74 @@ export default function AnalyticsPage() {
     );
   }
 
+  const getRoleInfo = () => {
+    if (user?.role_id === 3) return {
+      title: t('dashboard_administrator'),
+      description: t('admin_analytics_description'),
+      icon: Shield,
+      color: 'red'
+    };
+    if (user?.role_id === 2) return {
+      title: t('dashboard_instructor'),
+      description: t('instructor_analytics_description'),
+      icon: Users,
+      color: 'green'
+    };
+    return {
+      title: t('dashboard_student'),
+      description: t('student_analytics_description'),
+      icon: BookOpen,
+      color: 'blue'
+    };
+  };
+
+  const roleInfo = getRoleInfo();
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        
-        
-        {/* Page Header */}
-        <div className="mb-8">
-          <div className="flex items-center space-x-3 mb-4">
-            <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
-              <BarChart3 className="h-6 w-6 text-white" />
+    <PageWrapper
+      title={t('analytics_page_title')}
+      description={t('analytics_page_description')}
+      icon={BarChart3}
+      iconColor="purple"
+      badge={roleInfo.title}
+      actions={
+        <Button
+          variant="outline"
+          onClick={() => window.location.reload()}
+          className="flex items-center gap-2"
+        >
+          <RefreshCw className="h-4 w-4" />
+          Refresh Data
+        </Button>
+      }
+      headerContent={
+        <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+          <div className="flex items-start space-x-3">
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+              roleInfo.color === 'blue' ? 'bg-blue-100' : 
+              roleInfo.color === 'green' ? 'bg-green-100' : 
+              'bg-red-100'
+            }`}>
+              <roleInfo.icon className={`h-5 w-5 ${
+                roleInfo.color === 'blue' ? 'text-blue-600' : 
+                roleInfo.color === 'green' ? 'text-green-600' : 
+                'text-red-600'
+              }`} />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">{t('analytics_page_title')}</h1>
-              <p className="text-gray-600">
-                {t('analytics_page_description')}
-              </p>
-            </div>
-          </div>
-          
-          {/* Role-based description */}
-          <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
-            <div className="flex items-start space-x-3">
-              <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                {user?.role_id === 3 ? (
-                  <Shield className="h-5 w-5 text-blue-600" />
-                ) : user?.role_id === 2 ? (
-                  <Users className="h-5 w-5 text-green-600" />
-                ) : (
-                  <BookOpen className="h-5 w-5 text-blue-600" />
-                )}
-              </div>
-              <div>
-                <h3 className="font-medium text-gray-900">
-                  {user?.role_id === 3 && t('dashboard_administrator')}
-                  {user?.role_id === 2 && t('dashboard_instructor')}
-                  {user?.role_id === 1 && t('dashboard_student')}
-                </h3>
-                <p className="text-sm text-gray-600 mt-1">
-                  {user?.role_id === 3 && t('admin_analytics_description')}
-                  {user?.role_id === 2 && t('instructor_analytics_description')}
-                  {user?.role_id === 1 && t('student_analytics_description')}
-                </p>
-              </div>
+              <h3 className="font-medium text-gray-900">{roleInfo.title}</h3>
+              <p className="text-sm text-gray-600 mt-1">{roleInfo.description}</p>
             </div>
           </div>
         </div>
-
-        {/* Analytics Dashboard Component */}
-        <AnalyticsDashboard 
-          className="space-y-6"
-          timeRange="month"
-          compact={false}
-        />
-      </div>
-    </div>
+      }
+    >
+      {/* Analytics Dashboard Component */}
+      <AnalyticsDashboard 
+        className="space-y-6"
+        timeRange="month"
+        compact={false}
+      />
+    </PageWrapper>
   );
 }
