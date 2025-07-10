@@ -15,10 +15,12 @@ import { loginSchema, type LoginFormData } from '@/lib/validators'
 import { apiClient } from '@/lib/api'
 import { AuthManager } from '@/lib/auth'
 import { AuthResponse } from '@/types'
+import { useToast } from '@/components/ui/use-toast'
 
 export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false)
   const router = useRouter()
+  const { toast } = useToast()
 
   const {
     register,
@@ -60,19 +62,16 @@ export function LoginForm() {
         console.log('Redirecting to dashboard...')
         router.push('/dashboard')
       } catch (error) {
-        console.error('Failed to fetch user data:', error)
+        toast({
+          title: 'Warning',
+          description: 'Login successful, but failed to load user data. You may need to refresh the page.',
+          variant: 'destructive'
+        })
         // Still redirect, user data will be fetched later
-        console.log('Redirecting to dashboard anyway...')
         router.push('/dashboard')
       }
     },
     onError: (error: any) => {
-      console.error('=== LOGIN ERROR DEBUG ===')
-      console.error('Full error object:', error)
-      console.error('Error response:', error.response)
-      console.error('Error message:', error.message)
-      console.error('=========================')
-      
       // Extract error message from different possible error structures
       let message = 'Invalid credentials. Please try again.'
       
@@ -83,6 +82,12 @@ export function LoginForm() {
       } else if (error.message) {
         message = error.message
       }
+      
+      toast({
+        title: 'Login Failed',
+        description: message,
+        variant: 'destructive'
+      })
       
       setError('root', { message })
     },

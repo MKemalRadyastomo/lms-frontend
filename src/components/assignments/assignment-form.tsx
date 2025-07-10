@@ -28,6 +28,7 @@ import { DatePicker } from '@/components/ui/date-picker';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
+import { useToast } from '@/components/ui/use-toast';
 import { 
   CalendarIcon, 
   BookOpen, 
@@ -106,6 +107,7 @@ export const AssignmentForm: React.FC<AssignmentFormProps> = ({
   isSubmitting,
   mode = 'create'
 }) => {
+  const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(0);
   const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>(
     initialData?.quiz_questions_json || []
@@ -183,7 +185,11 @@ export const AssignmentForm: React.FC<AssignmentFormProps> = ({
 
       await onSubmit(submitData);
     } catch (error) {
-      console.error('Form submission error:', error);
+      toast({
+        title: 'Submission Error',
+        description: 'Failed to submit assignment. Please try again.',
+        variant: 'destructive'
+      });
     }
   };
 

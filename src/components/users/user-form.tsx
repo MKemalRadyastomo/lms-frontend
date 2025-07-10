@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select' // Added import
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { useToast } from '@/components/ui/use-toast'
 import { apiClient } from '@/lib/api'
 import { AuthManager } from '@/lib/auth'
 import { User } from '@/types'
@@ -42,6 +43,7 @@ const roleOptions = [
 
 export function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
   const { t } = useTranslation() // Added useTranslation hook
+  const { toast } = useToast()
   const [profileImage, setProfileImage] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(
     user?.profile_picture_url || null
@@ -113,7 +115,11 @@ export function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
         try {
           await apiClient.uploadProfilePicture(newUser.id, profileImage)
         } catch (error) {
-          console.error('Failed to upload profile image:', error)
+          toast({
+            title: 'Upload Error',
+            description: 'Failed to upload profile image. User created successfully.',
+            variant: 'destructive'
+          })
         }
       }
       
@@ -155,7 +161,11 @@ export function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
         try {
           await apiClient.uploadProfilePicture(updatedUser.id, profileImage)
         } catch (error) {
-          console.error('Failed to upload profile image:', error)
+          toast({
+            title: 'Upload Error',
+            description: 'Failed to upload profile image. User updated successfully.',
+            variant: 'destructive'
+          })
         }
       }
       

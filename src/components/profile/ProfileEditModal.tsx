@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
+import { useToast } from '@/components/ui/use-toast';
 import { User } from '@/types';
 import { ProfileUpdateData, profileUpdateSchema } from '@/lib/validators/profile';
 import { profileApi } from '@/lib/api/profile';
@@ -33,6 +34,7 @@ export function ProfileEditModal({
   onUpdateSuccess 
 }: ProfileEditModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast: uiToast } = useToast();
 
   const {
     register,
@@ -66,8 +68,6 @@ export function ProfileEditModal({
       onClose();
       reset(data); // Reset form with new values
     } catch (error: any) {
-      console.error('Profile update error:', error);
-      
       let errorMessage = 'Gagal memperbarui profil';
       if (error.response?.status === 400) {
         errorMessage = error.response.data?.message || 'Data yang dimasukkan tidak valid';
@@ -77,7 +77,13 @@ export function ProfileEditModal({
         errorMessage = 'Email sudah digunakan oleh pengguna lain';
       }
       
+      // Use both toast systems for consistency
       toast.error(errorMessage);
+      uiToast({
+        title: 'Profile Update Failed',
+        description: errorMessage,
+        variant: 'destructive'
+      });
     } finally {
       setIsSubmitting(false);
     }

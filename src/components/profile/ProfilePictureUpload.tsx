@@ -5,6 +5,7 @@ import { useDropzone } from 'react-dropzone';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useToast } from '@/components/ui/use-toast';
 import { 
   Upload, 
   Camera, 
@@ -34,6 +35,7 @@ export function ProfilePictureUpload({
   className
 }: ProfilePictureUploadProps) {
   const [dragActive, setDragActive] = useState(false);
+  const { toast } = useToast();
 
   const {
     uploadImage,
@@ -49,7 +51,11 @@ export function ProfilePictureUpload({
       cleanup();
     },
     onError: (error) => {
-      console.error('Upload failed:', error);
+      toast({
+        title: 'Upload Failed',
+        description: 'Failed to upload profile picture. Please try again.',
+        variant: 'destructive'
+      });
     }
   });
 

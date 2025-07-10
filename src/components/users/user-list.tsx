@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select' // Added import
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { useToast } from '@/components/ui/use-toast'
 import { UserForm } from './user-form'
 import { apiClient } from '@/lib/api'
 import { AuthManager } from '@/lib/auth'
@@ -38,6 +39,7 @@ export function UserList({ showCreateForm = false, onUserSelect }: UserListProps
   const [page, setPage] = useState(1)
   const queryClient = useQueryClient()
   const { t } = useTranslation() // Added useTranslation hook
+  const { toast } = useToast()
 
   const filters: UserFilters & { page: number; limit: number } = {
     page,
@@ -58,8 +60,11 @@ export function UserList({ showCreateForm = false, onUserSelect }: UserListProps
       queryClient.invalidateQueries({ queryKey: ['users'] })
     },
     onError: (error: any) => {
-      console.error('Failed to delete user:', error)
-      // Could show a toast notification here
+      toast({
+        title: 'Delete Failed',
+        description: 'Failed to delete the user. Please try again.',
+        variant: 'destructive'
+      })
     },
   })
 

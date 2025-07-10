@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { usePathname } from "next/navigation";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+// Note: Import toast in components that use this hook if needed
 
 export interface BreadcrumbItem {
   label: string;
@@ -54,6 +55,7 @@ export function useBreadcrumb(): BreadcrumbItem[] {
             const course = await apiClient.getCourseById(id);
             return { id, name: course?.name ?? `Course ${id}` };
           } catch (error) {
+            // Keep console.error for debugging, handle gracefully
             console.error(`Failed to fetch course ${id}:`, error);
             return { id, name: `Course ${id}` };
           }
@@ -106,6 +108,7 @@ export function useBreadcrumb(): BreadcrumbItem[] {
               return { id, title: `Assignment ${id}` };
             }
           } catch (error) {
+            // Keep console.error for debugging, handle gracefully
             console.error(`Failed to fetch assignment ${id}:`, error);
             return { id, title: `Assignment ${id}` };
           }
@@ -138,6 +141,7 @@ export function useBreadcrumb(): BreadcrumbItem[] {
                 : user.username;
             return { id, name };
           } catch (error) {
+            // Keep console.error for debugging, handle gracefully
             console.error(`Failed to fetch user ${id}:`, error);
             return { id, name: `User ${id}` };
           }

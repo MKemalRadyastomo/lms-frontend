@@ -5,6 +5,7 @@ import * as z from 'zod';
 import { useMutation } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api';
 import { toast } from 'sonner';
+import { useToast } from '@/components/ui/use-toast';
 import { Submission } from '@/types';
 import {
   Form,
@@ -31,6 +32,7 @@ interface GradeSubmissionFormProps {
 
 export function GradeSubmissionForm({ submission, onGradeSuccess }: GradeSubmissionFormProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const { toast: uiToast } = useToast();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -49,8 +51,12 @@ export function GradeSubmissionForm({ submission, onGradeSuccess }: GradeSubmiss
       setIsOpen(false);
     },
     onError: (error) => {
-      console.error('Error grading submission:', error);
       toast.error('Failed to grade submission.');
+      uiToast({
+        title: 'Grading Failed',
+        description: 'Failed to grade the submission. Please try again.',
+        variant: 'destructive'
+      });
     },
   });
 

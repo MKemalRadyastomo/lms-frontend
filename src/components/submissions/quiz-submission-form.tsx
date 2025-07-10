@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
+import { useToast } from '@/components/ui/use-toast';
 import { 
   FileQuestion, 
   Clock, 
@@ -57,6 +58,7 @@ export const QuizSubmissionForm: React.FC<QuizSubmissionFormProps> = ({
   isSubmitting,
   isDraft = false
 }) => {
+  const { toast } = useToast();
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [timeRemaining, setTimeRemaining] = useState<string>('');
   const [isAutoSaving, setIsAutoSaving] = useState(false);
@@ -116,7 +118,11 @@ export const QuizSubmissionForm: React.FC<QuizSubmissionFormProps> = ({
           });
           setLastSaved(new Date());
         } catch (error) {
-          console.error('Auto-save failed:', error);
+          toast({
+            title: 'Auto-save Failed',
+            description: 'Failed to automatically save your progress.',
+            variant: 'destructive'
+          });
         } finally {
           setIsAutoSaving(false);
         }

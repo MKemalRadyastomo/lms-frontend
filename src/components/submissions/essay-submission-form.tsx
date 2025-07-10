@@ -12,6 +12,7 @@ import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { useToast } from '@/components/ui/use-toast';
 import { 
   Save, 
   Send, 
@@ -55,6 +56,7 @@ export const EssaySubmissionForm: React.FC<EssaySubmissionFormProps> = ({
   isSubmitting,
   isDraft = false
 }) => {
+  const { toast } = useToast();
   const [wordCount, setWordCount] = useState(0);
   const [charCount, setCharCount] = useState(0);
   const [isAutoSaving, setIsAutoSaving] = useState(false);
@@ -108,7 +110,11 @@ export const EssaySubmissionForm: React.FC<EssaySubmissionFormProps> = ({
         await onSaveDraft({ answer_text: text, draft: true });
         setLastSaved(new Date());
       } catch (error) {
-        console.error('Auto-save failed:', error);
+        toast({
+          title: 'Auto-save Failed',
+          description: 'Failed to automatically save your essay progress.',
+          variant: 'destructive'
+        });
       } finally {
         setIsAutoSaving(false);
       }

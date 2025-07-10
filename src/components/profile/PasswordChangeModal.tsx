@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
+import { useToast } from '@/components/ui/use-toast';
 import { profileApi } from '@/lib/api/profile';
 import { 
   Eye, 
@@ -53,6 +54,7 @@ export function PasswordChangeModal({
   userId
 }: PasswordChangeModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast: uiToast } = useToast();
   const [showPasswords, setShowPasswords] = useState({
     current: false,
     new: false,
@@ -121,8 +123,6 @@ export function PasswordChangeModal({
       });
       handleClose();
     } catch (error: any) {
-      console.error('Password change error:', error);
-      
       let errorMessage = 'Gagal mengubah password';
       if (error.response?.status === 400) {
         errorMessage = 'Password saat ini tidak benar';
@@ -132,7 +132,13 @@ export function PasswordChangeModal({
         errorMessage = 'Sesi Anda telah berakhir. Silakan login kembali.';
       }
       
+      // Use both toast systems for consistency
       toast.error(errorMessage);
+      uiToast({
+        title: 'Password Change Failed',
+        description: errorMessage,
+        variant: 'destructive'
+      });
     } finally {
       setIsSubmitting(false);
     }

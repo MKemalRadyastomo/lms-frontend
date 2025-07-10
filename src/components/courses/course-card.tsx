@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuLabel } from '@/components/ui/dropdown-menu'
 import { Badge } from '@/components/ui/badge' // Added Badge import
+import { useToast } from '@/components/ui/use-toast'
 import { AuthManager } from '@/lib/auth'
 import { apiClient } from '@/lib/api'
 import { Course } from '@/types'
@@ -22,6 +23,7 @@ export function CourseCard({ course, onEdit, onView }: CourseCardProps) {
   const queryClient = useQueryClient()
   const currentUser = AuthManager.getUserData()
   const { t } = useTranslation()
+  const { toast } = useToast()
 
   const deleteCourseMutation = useMutation({
     mutationFn: (courseId: number) => apiClient.deleteCourse(courseId),
@@ -29,8 +31,11 @@ export function CourseCard({ course, onEdit, onView }: CourseCardProps) {
       queryClient.invalidateQueries({ queryKey: ['courses'] })
     },
     onError: (error: any) => {
-      console.error('Failed to delete course:', error)
-      // Could show a toast notification here
+      toast({
+        title: 'Delete Failed',
+        description: 'Failed to delete the course. Please try again.',
+        variant: 'destructive'
+      })
     },
   })
 

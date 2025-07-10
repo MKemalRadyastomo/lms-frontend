@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
+import { useToast } from '@/components/ui/use-toast';
 import { profileApi } from '@/lib/api/profile';
 import { profilePictureSchema } from '@/lib/validators/profile';
 
@@ -30,6 +31,7 @@ export function useImageUpload(options: UseImageUploadOptions = {}): UseImageUpl
     allowedTypes = ['image/jpeg', 'image/jpg', 'image/png']
   } = options;
 
+  const { toast: uiToast } = useToast();
   const [isUploading, setIsUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -87,8 +89,6 @@ export function useImageUpload(options: UseImageUploadOptions = {}): UseImageUpl
       onSuccess?.(response.profile_picture_url);
       
     } catch (error: any) {
-      console.error('Upload error:', error);
-      
       // Handle different error types
       let errorMessage = 'Gagal mengunggah foto profil';
       
@@ -102,7 +102,13 @@ export function useImageUpload(options: UseImageUploadOptions = {}): UseImageUpl
         errorMessage = 'Koneksi bermasalah. Periksa internet Anda.';
       }
 
+      // Use both toast systems for consistency
       toast.error(errorMessage);
+      uiToast({
+        title: 'Upload Failed',
+        description: errorMessage,
+        variant: 'destructive'
+      });
       onError?.(errorMessage);
       
       // Clear preview on error

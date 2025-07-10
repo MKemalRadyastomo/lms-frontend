@@ -18,8 +18,10 @@ import { RefreshCw, Settings, Shield } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { useToast } from "@/components/ui/use-toast";
 
 export default function ProfilePage() {
+  const { toast: uiToast } = useToast();
   // State management
   const [user, setUser] = useState<User | null>(null);
   const [profileStats, setProfileStats] = useState<ProfileStats | null>(null);
@@ -71,9 +73,14 @@ export default function ProfilePage() {
           setIsStatsLoading(false);
         }
       } catch (error) {
-        console.error("Error loading profile:", error);
-        setError("Gagal memuat data profil");
-        toast.error("Gagal memuat data profil");
+        const errorMessage = "Gagal memuat data profil";
+        setError(errorMessage);
+        toast.error(errorMessage);
+        uiToast({
+          title: 'Profile Load Failed',
+          description: errorMessage,
+          variant: 'destructive'
+        });
       } finally {
         setIsLoading(false);
       }
@@ -109,8 +116,13 @@ export default function ProfilePage() {
       setProfileStats(stats);
       toast.success("Data profil berhasil diperbarui");
     } catch (error) {
-      console.error("Error refreshing profile:", error);
-      toast.error("Gagal memperbarui data profil");
+      const errorMessage = "Gagal memperbarui data profil";
+      toast.error(errorMessage);
+      uiToast({
+        title: 'Profile Refresh Failed',
+        description: errorMessage,
+        variant: 'destructive'
+      });
     } finally {
       setIsStatsLoading(false);
     }
