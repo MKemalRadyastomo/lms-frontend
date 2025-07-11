@@ -20,6 +20,7 @@ import { RefreshButton } from './RefreshButton'
 import { analyticsApi } from '@/lib/api/analytics'
 import { apiClient } from '@/lib/api'
 import { AuthManager } from '@/lib/auth'
+import { ProfileStatsComponent } from '@/components/profile/ProfileStats'
 import { 
   StudentAnalytics, 
   InstructorAnalytics, 
@@ -43,6 +44,7 @@ export function AnalyticsDashboard({
   compact = false 
 }: AnalyticsDashboardProps) {
   const [analyticsData, setAnalyticsData] = useState<StudentAnalytics | InstructorAnalytics | AdminAnalytics | null>(null)
+  const [profileStats, setProfileStats] = useState<any>(null)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [fromCache, setFromCache] = useState(false)
@@ -78,6 +80,26 @@ export function AnalyticsDashboard({
 
       // For development, use mock data
       setAnalyticsData(getMockData(userRole))
+      
+      // Load profile stats
+      try {
+        const stats = await apiClient.getUserStats(user.id)
+        setProfileStats(stats)
+      } catch (statsError) {
+        console.warn("Failed to load user stats:", statsError)
+        // Set default stats if endpoint not available
+        setProfileStats({
+          coursesEnrolled: 0,
+          assignmentsCompleted: 0,
+          assignmentsPending: 0,
+          totalSubmissions: 0,
+          averageGrade: null,
+          lastLoginAt: null,
+          accountCreatedAt: user.created_at,
+          completionRate: 0,
+        })
+      }
+      
       setLastUpdated(new Date())
       setFromCache(useCache)
       
@@ -154,8 +176,8 @@ export function AnalyticsDashboard({
       {/* Analytics Content */}
       {analyticsData && (
         <>
-          {userRole === 'student' && <StudentAnalyticsView data={analyticsData as StudentAnalytics} compact={compact} dateFnsLocale={dateFnsLocale} />}
-          {userRole === 'instructor' && <InstructorAnalyticsView data={analyticsData as InstructorAnalytics} compact={compact} />}
+          {userRole === 'student' && <StudentAnalyticsView data={analyticsData as StudentAnalytics} compact={compact} dateFnsLocale={dateFnsLocale} profileStats={profileStats} />}
+          {userRole === 'instructor' && <InstructorAnalyticsView data={analyticsData as InstructorAnalytics} compact={compact} profileStats={profileStats} />}
           {userRole === 'admin' && <AdminAnalyticsView data={analyticsData as AdminAnalytics} compact={compact} />}
         </>
       )}
@@ -164,12 +186,20 @@ export function AnalyticsDashboard({
 }
 
 // Student Analytics View
-function StudentAnalyticsView({ data, compact, dateFnsLocale }: { data: StudentAnalytics; compact: boolean; dateFnsLocale: Locale | undefined }) {
+function StudentAnalyticsView({ data, compact, dateFnsLocale, profileStats }: { data: StudentAnalytics; compact: boolean; dateFnsLocale: Locale | undefined; profileStats: any }) {
   const { t } = useTranslation();
   const avgProgress = data.courseProgress.reduce((acc, course) => acc + course.progressPercentage, 0) / data.courseProgress.length || 0
   
   return (
     <div className="space-y-6">
+      {/* Profile Stats */}
+      {profileStats && (
+        <div className="mb-8">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('personal_performance')}</h3>
+          <ProfileStatsComponent stats={profileStats} userRole={1} />
+        </div>
+      )}
+      
       {/* Quick Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
@@ -280,10 +310,18 @@ function StudentAnalyticsView({ data, compact, dateFnsLocale }: { data: StudentA
   )
 }
 
-function InstructorAnalyticsView({ data, compact }: { data: InstructorAnalytics; compact: boolean }) {
+function InstructorAnalyticsView({ data, compact, profileStats }: { data: InstructorAnalytics; compact: boolean; profileStats: any }) {
   const { t } = useTranslation();
   return (
     <div className="space-y-6">
+      {/* Profile Stats */}
+      {profileStats && (
+        <div className="mb-8">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('teaching_performance')}</h3>
+          <ProfileStatsComponent stats={profileStats} userRole={2} />
+        </div>
+      )}
+      
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title={t('classes')}

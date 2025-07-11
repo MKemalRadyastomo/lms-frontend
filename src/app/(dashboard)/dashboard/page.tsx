@@ -26,6 +26,7 @@ import { apiClient } from "@/lib/api";
 import { AuthManager } from "@/lib/auth";
 import { User } from "@/types";
 import { useTranslation } from "react-i18next";
+import { ProfileStatsComponent } from "@/components/profile/ProfileStats";
 
 interface DashboardStats {
   totalCourses: number;
@@ -45,6 +46,7 @@ interface RecentActivity {
 
 export default function DashboardPage() {
   const [user, setUser] = useState<User | null>(null);
+  const [profileStats, setProfileStats] = useState<any>(null);
   const userId = AuthManager.getUserId();
   const { t } = useTranslation();
 
@@ -94,6 +96,38 @@ export default function DashboardPage() {
     enabled: !!userId && isStudent,
     staleTime: 5 * 60 * 1000,
   });
+
+  // Load profile stats for all users
+  const { data: profileStatsData } = useQuery({
+    queryKey: ["profile-stats", userId],
+    queryFn: async () => {
+      try {
+        return await apiClient.getUserStats(userId!);
+      } catch (error) {
+        console.warn("Failed to load user stats:", error);
+        // Return default stats if endpoint not available
+        return {
+          coursesEnrolled: 0,
+          assignmentsCompleted: 0,
+          assignmentsPending: 0,
+          totalSubmissions: 0,
+          averageGrade: null,
+          lastLoginAt: null,
+          accountCreatedAt: user?.created_at,
+          completionRate: 0,
+        };
+      }
+    },
+    enabled: !!userId && !!user,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Update profile stats when data changes
+  useEffect(() => {
+    if (profileStatsData) {
+      setProfileStats(profileStatsData);
+    }
+  }, [profileStatsData]);
 
   // Real stats from API with proper type safety
   const stats: DashboardStats = {
@@ -179,6 +213,33 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Profile Performance Stats */}
+      {profileStats && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <TrendingUp className="h-5 w-5" />
+              <span>
+                {isStudent && t('personal_performance')}
+                {isInstructor && t('teaching_performance')}
+                {isAdmin && t('system_performance')}
+              </span>
+            </CardTitle>
+            <CardDescription>
+              {isStudent && t('track_your_learning_progress')}
+              {isInstructor && t('monitor_your_teaching_metrics')}
+              {isAdmin && t('overview_of_your_admin_activities')}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ProfileStatsComponent 
+              stats={profileStats} 
+              userRole={user?.role_id || 1} 
+            />
+          </CardContent>
+        </Card>
+      )}
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

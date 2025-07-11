@@ -37,7 +37,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       { name: t("courses"), href: "/courses", icon: BookOpen },
       { name: t("assignments"), href: "/assignments", icon: BookOpen },
       { name: t("analytics"), href: "/analytics", icon: BarChart3 },
-      { name: t("profile"), href: "/profile", icon: UserIcon },
     ];
 
     // Add test page for development

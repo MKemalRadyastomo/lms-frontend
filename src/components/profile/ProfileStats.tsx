@@ -12,6 +12,7 @@ import {
   Calendar
 } from "lucide-react";
 import { ProfileStats } from "@/types/profile";
+import { useTranslation } from "react-i18next";
 
 interface ProfileStatsProps {
   stats: ProfileStats;
@@ -19,41 +20,43 @@ interface ProfileStatsProps {
 }
 
 export function ProfileStatsComponent({ stats, userRole }: ProfileStatsProps) {
+  const { t } = useTranslation();
+  
   // Format completion rate
   const completionRate = Math.round(stats.completionRate || 0);
   
   // Format average grade
   const averageGrade = stats.averageGrade ? 
     `${stats.averageGrade.toFixed(1)}/100` : 
-    "Belum ada";
+    t('not_available');
 
   // Get stats based on user role
   const getStatsConfig = () => {
     if (userRole === 2) { // Guru
       return [
         {
-          title: "Kursus Diajar",
+          title: t('courses_taught'),
           value: stats.coursesEnrolled || 0,
           icon: BookOpen,
           color: "text-blue-600",
           bgColor: "bg-blue-100",
         },
         {
-          title: "Tugas Dibuat",
+          title: t('assignments_created'),
           value: stats.totalSubmissions || 0,
           icon: FileText,
           color: "text-green-600",
           bgColor: "bg-green-100",
         },
         {
-          title: "Nilai Diberikan",
+          title: t('grades_given'),
           value: stats.assignmentsCompleted || 0,
           icon: Award,
           color: "text-purple-600",
           bgColor: "bg-purple-100",
         },
         {
-          title: "Siswa Aktif",
+          title: t('active_students'),
           value: stats.assignmentsPending || 0,
           icon: TrendingUp,
           color: "text-orange-600",
@@ -63,28 +66,28 @@ export function ProfileStatsComponent({ stats, userRole }: ProfileStatsProps) {
     } else { // Siswa or Admin
       return [
         {
-          title: "Kursus Diikuti",
+          title: t('courses_enrolled'),
           value: stats.coursesEnrolled || 0,
           icon: BookOpen,
           color: "text-blue-600",
           bgColor: "bg-blue-100",
         },
         {
-          title: "Tugas Selesai",
+          title: t('assignments_completed'),
           value: stats.assignmentsCompleted || 0,
           icon: CheckCircle,
           color: "text-green-600",
           bgColor: "bg-green-100",
         },
         {
-          title: "Tugas Pending",
+          title: t('pending_assignments'),
           value: stats.assignmentsPending || 0,
           icon: Clock,
           color: "text-orange-600",
           bgColor: "bg-orange-100",
         },
         {
-          title: "Total Submisi",
+          title: t('total_submissions'),
           value: stats.totalSubmissions || 0,
           icon: FileText,
           color: "text-purple-600",
@@ -135,7 +138,7 @@ export function ProfileStatsComponent({ stats, userRole }: ProfileStatsProps) {
           <CardHeader className="pb-4">
             <CardTitle className="text-lg flex items-center text-gray-900">
               <TrendingUp className="h-5 w-5 mr-3 text-blue-600" />
-              Tingkat Penyelesaian
+              {t('completion_rate_title')}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
