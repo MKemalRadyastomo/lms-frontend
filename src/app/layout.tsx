@@ -34,6 +34,7 @@ export default async function RootLayout({
   return (
     <html lang={i18n.language} dir={i18n.dir()} suppressHydrationWarning> {/* Add lang and dir attributes */}
       <body className={inter.className}>
+        <a href="#main-content" className="skip-link">Skip to main content</a>
         <RootProvider resources={i18n.services.resourceStore.data}>{children}</RootProvider> {/* Pass resources to RootProvider */}
       </body>
     </html>

@@ -44,3 +44,4 @@ Thumbs.db
 *.md
 !README.md
 *.sh
+.claude
