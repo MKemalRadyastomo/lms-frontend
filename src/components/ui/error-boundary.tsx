@@ -45,7 +45,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
           <CardContent>
             <div className="space-y-3">
               <p className="text-red-700">
-                This page encountered an error and couldn't be displayed properly.
+                This page encountered an error and couldn&apos;t be displayed properly.
               </p>
               {this.state.error && (
                 <details className="text-sm">

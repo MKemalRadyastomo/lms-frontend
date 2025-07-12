@@ -30,7 +30,7 @@ import axios, { AxiosInstance } from "axios";
 import Cookies from "js-cookie";
 
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/v1";
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api";
 
 export const api: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
@@ -77,9 +77,15 @@ class ApiClient {
 
   // Authentication Methods
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
+    // Map frontend username to backend email format
+    const backendCredentials = {
+      email: credentials.username, // Backend expects 'email' field
+      password: credentials.password
+    };
+    
     const response = await this.client.post<AuthResponse>(
       "/auth/login",
-      credentials
+      backendCredentials
     );
     return response.data;
   }

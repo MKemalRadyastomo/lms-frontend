@@ -308,7 +308,7 @@ export const FileSubmissionForm: React.FC<FileSubmissionFormProps> = ({
                   </div>
                   
                   <p className="text-sm text-green-700">
-                    File siap untuk diunggah. Klik "Kirim File" untuk mengirim.
+                    File siap untuk diunggah. Klik &quot;Kirim File&quot; untuk mengirim.
                   </p>
                 </motion.div>
               ) : (

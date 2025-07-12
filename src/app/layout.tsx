@@ -2,7 +2,7 @@ import { RootProvider } from "@/components/providers/root-provider";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { useTranslation } from "@/lib/i18n.server"; // Import useTranslation from server-side i18n
+import { getServerTranslation } from "@/lib/i18n.server"; // Import getServerTranslation from server-side i18n
 import { headers } from 'next/headers'; // Import headers
 
 const inter = Inter({ subsets: ["latin"] });
@@ -29,7 +29,7 @@ export default async function RootLayout({
   const acceptLanguage = headersList.get('accept-language') || 'en-US'; // Default to en-US if header is missing
   const lng = acceptLanguage.split(',')[0].split('-')[0]; // Extract primary language (e.g., 'en' from 'en-US,en;q=0.9')
 
-  const { i18n } = await useTranslation(lng, 'common'); // Use detected language
+  const { i18n } = await getServerTranslation(lng, 'common'); // Use detected language
 
   return (
     <html lang={i18n.language} dir={i18n.dir()} suppressHydrationWarning> {/* Add lang and dir attributes */}

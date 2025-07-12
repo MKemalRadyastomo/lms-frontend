@@ -34,44 +34,69 @@ export function LoginForm() {
   const loginMutation = useMutation({
     mutationFn: apiClient.login.bind(apiClient),
     onSuccess: async (data: AuthResponse) => {
-      console.log('=== LOGIN SUCCESS DEBUG ===')
-      console.log('Raw backend response:', data)
-      console.log('Token:', data.token)
-      console.log('User ID:', data.user_id)
-      console.log('===========================')
-      
-      // Store auth tokens
-      AuthManager.setAuthTokens({
-        token: data.token,
-        userId: data.user_id,
-      })
-      
-      console.log('After storing tokens:')
-      console.log('Is authenticated:', AuthManager.isAuthenticated())
-      console.log('Stored token:', AuthManager.getAuthToken())
-      console.log('Stored user ID:', AuthManager.getUserId())
-
-      // Fetch and store user data
       try {
-        console.log('Fetching user data for ID:', data.user_id)
+        // Initialize secure session with enhanced security features
+        AuthManager.initializeSession({
+          token: data.token,
+          userId: data.user_id,
+        })
+        
+        // Fetch and store user data
         const userData = await apiClient.getUserById(data.user_id)
-        console.log('User data received:', userData)
         AuthManager.setUserData(userData)
         
-        // Redirect to dashboard
-        console.log('Redirecting to dashboard...')
-        router.push('/dashboard')
-      } catch (error) {
+        // Show success message
         toast({
-          title: 'Warning',
-          description: 'Login successful, but failed to load user data. You may need to refresh the page.',
+          title: 'Login Successful',
+          description: 'Welcome back! Redirecting to dashboard...',
+          variant: 'default'
+        })
+        
+        // Redirect with a small delay to ensure cookies are properly set
+        setTimeout(() => {
+          window.location.href = '/dashboard' // Use window.location for full page reload to ensure middleware picks up cookies
+        }, 800)
+        
+      } catch (error) {
+        console.error('Error during login process:', error)
+        toast({
+          title: 'Login Error',
+          description: 'Authentication failed. Please try again.',
           variant: 'destructive'
         })
-        // Still redirect, user data will be fetched later
-        router.push('/dashboard')
+        
+        // Clear any partial auth state
+        AuthManager.clearAuth()
+        
+        setError('root', { 
+          message: 'Authentication failed. Please try again.' 
+        })
       }
     },
     onError: (error: any) => {
+      console.error('Login mutation error:', error)
+      
+      // Record failed attempt for security
+      AuthManager.recordFailedAttempt('login')
+      
+      // Check if account is now locked
+      if (AuthManager.isAccountLocked('login')) {
+        const lockoutTime = AuthManager.getLockoutTimeRemaining('login')
+        const minutes = Math.ceil(lockoutTime / (60 * 1000))
+        
+        toast({
+          title: 'Account Temporarily Locked',
+          description: `Too many failed attempts. Try again in ${minutes} minutes.`,
+          variant: 'destructive'
+        })
+        
+        setError('root', { 
+          message: `Account locked. Try again in ${minutes} minutes.`,
+          type: 'lockout'
+        })
+        return
+      }
+      
       // Extract error message from different possible error structures
       let message = 'Invalid credentials. Please try again.'
       
@@ -79,21 +104,37 @@ export function LoginForm() {
         message = error.response.data.message
       } else if (error.response?.data?.error) {
         message = error.response.data.error
-      } else if (error.message) {
+      } else if (error.message && error.message !== 'Network Error') {
         message = error.message
       }
       
+      const failedAttempts = AuthManager.getFailedAttempts('login')
+      const attemptsRemaining = 5 - failedAttempts.attempts
+      
+      if (attemptsRemaining > 0) {
+        message += ` (${attemptsRemaining} attempts remaining)`
+      }
+      
+      // Show toast for errors
       toast({
         title: 'Login Failed',
         description: message,
         variant: 'destructive'
       })
       
-      setError('root', { message })
+      // Set form error that persists until next submission
+      setError('root', { 
+        message,
+        type: 'server'
+      })
+      
+      // Don't reset form on error - let user see the error and try again
     },
   })
 
   const onSubmit = (data: LoginFormData) => {
+    // Clear previous errors before new attempt
+    setError('root', { message: '' })
     loginMutation.mutate(data)
   }
 
@@ -108,11 +149,11 @@ export function LoginForm() {
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="username">Username</Label>
+            <Label htmlFor="username">Email</Label>
             <Input
               id="username"
-              type="text"
-              placeholder="Enter your username"
+              type="email"
+              placeholder="Enter your email address"
               {...register('username')}
               className={errors.username ? 'border-red-500' : ''}
             />

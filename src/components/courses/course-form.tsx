@@ -37,6 +37,13 @@ interface CourseFormProps {
 
 export function CourseForm({ course, onSuccess, onCancel }: CourseFormProps) {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  const isEditing = !!course;
+  const currentUser = AuthManager.getUserData();
+  const [profileImage, setProfileImage] = useState<File | null>(null);
+  const [profileImagePreview, setProfileImagePreview] = useState<string | null>(
+    null
+  );
 
   const courseFormSchema = z.object({
     name: z.string().min(3, t("course_name_min_length")),
@@ -48,44 +55,6 @@ export function CourseForm({ course, onSuccess, onCancel }: CourseFormProps) {
   });
 
   type CourseFormData = z.infer<typeof courseFormSchema>;
-
-  const privacyOptions = [
-    { value: "private", label: t("private_course_desc") },
-    { value: "public", label: t("public_course_desc") },
-  ];
-
-  const queryClient = useQueryClient();
-  const isEditing = !!course;
-  const currentUser = AuthManager.getUserData();
-
-  // Check if user has permission to create/edit courses
-  if (!AuthManager.hasRole("admin") && !AuthManager.hasRole("guru")) {
-    return (
-      <Card
-        className="w-full max-w-2xl"
-        data-testid="course-form-access-denied"
-      >
-        <CardContent className="p-6 text-center">
-          <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
-            <X className="h-8 w-8 text-red-600" />
-          </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
-            {t("access_denied")}
-          </h3>
-          <p className="text-gray-600 mb-4">{t("access_denied_message")}</p>
-          {onCancel && (
-            <Button
-              onClick={onCancel}
-              variant="outline"
-              data-testid="course-form-cancel-button"
-            >
-              {t("cancel")}
-            </Button>
-          )}
-        </CardContent>
-      </Card>
-    );
-  }
 
   const {
     register,
@@ -152,6 +121,11 @@ export function CourseForm({ course, onSuccess, onCancel }: CourseFormProps) {
     },
   });
 
+  const privacyOptions = [
+    { value: "private", label: t("private_course_desc") },
+    { value: "public", label: t("public_course_desc") },
+  ];
+
   const onSubmit = (data: CourseFormData) => {
     if (isEditing) {
       updateCourseMutation.mutate(data);
@@ -163,10 +137,34 @@ export function CourseForm({ course, onSuccess, onCancel }: CourseFormProps) {
   const isLoading =
     createCourseMutation.isPending || updateCourseMutation.isPending;
 
-  const [profileImage, setProfileImage] = useState<File | null>(null);
-  const [profileImagePreview, setProfileImagePreview] = useState<string | null>(
-    null
-  );
+  // Check if user has permission to create/edit courses
+  if (!AuthManager.hasRole("admin") && !AuthManager.hasRole("guru")) {
+    return (
+      <Card
+        className="w-full max-w-2xl"
+        data-testid="course-form-access-denied"
+      >
+        <CardContent className="p-6 text-center">
+          <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+            <X className="h-8 w-8 text-red-600" />
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            {t("access_denied")}
+          </h3>
+          <p className="text-gray-600 mb-4">{t("access_denied_message")}</p>
+          {onCancel && (
+            <Button
+              onClick={onCancel}
+              variant="outline"
+              data-testid="course-form-cancel-button"
+            >
+              {t("cancel")}
+            </Button>
+          )}
+        </CardContent>
+      </Card>
+    );
+  }
 
   function handleFileChange(event: ChangeEvent<HTMLInputElement>): void {
     const file = event.target.files?.[0];

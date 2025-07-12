@@ -211,12 +211,12 @@ export default function ComponentShowcase() {
               <div>
                 <h4 className="font-medium mb-2">Good Test ID Examples</h4>
                 <div className="space-y-2 text-sm font-mono bg-gray-50 p-4 rounded">
-                  <div>Button: <code className="text-blue-600">data-testid="submit-button"</code></div>
-                  <div>Input: <code className="text-blue-600">data-testid="username-input"</code></div>
-                  <div>Select: <code className="text-blue-600">data-testid="role-select"</code></div>
-                  <div>Textarea: <code className="text-blue-600">data-testid="description-textarea"</code></div>
-                  <div>Menu: <code className="text-blue-600">data-testid="actions-menu"</code></div>
-                  <div>Card: <code className="text-blue-600">data-testid="course-card-123"</code></div>
+                  <div>Button: <code className="text-blue-600">data-testid=&quot;submit-button&quot;</code></div>
+                  <div>Input: <code className="text-blue-600">data-testid=&quot;username-input&quot;</code></div>
+                  <div>Select: <code className="text-blue-600">data-testid=&quot;role-select&quot;</code></div>
+                  <div>Textarea: <code className="text-blue-600">data-testid=&quot;description-textarea&quot;</code></div>
+                  <div>Menu: <code className="text-blue-600">data-testid=&quot;actions-menu&quot;</code></div>
+                  <div>Card: <code className="text-blue-600">data-testid=&quot;course-card-123&quot;</code></div>
                 </div>
               </div>
               

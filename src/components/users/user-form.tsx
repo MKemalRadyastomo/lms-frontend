@@ -51,30 +51,6 @@ export function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
   const queryClient = useQueryClient()
   const isEditing = !!user
 
-  // Check if user has permission to create/edit users
-  if (!AuthManager.hasRole('admin')) {
-    return (
-      <Card className="w-full max-w-2xl">
-        <CardContent className="p-6 text-center">
-          <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
-            <X className="h-8 w-8 text-red-600" />
-          </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
-            Access Denied
-          </h3>
-          <p className="text-gray-600 mb-4">
-            Only administrators can create or edit user accounts.
-          </p>
-          {onCancel && (
-            <Button onClick={onCancel} variant="outline">
-              {t('cancel')}
-            </Button>
-          )}
-        </CardContent>
-      </Card>
-    )
-  }
-
   const {
     register,
     handleSubmit,
@@ -217,6 +193,30 @@ export function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
   }
 
   const isLoading = createUserMutation.isPending || updateUserMutation.isPending
+
+  // Check if user has permission to create/edit users
+  if (!AuthManager.hasRole('admin')) {
+    return (
+      <Card className="w-full max-w-2xl">
+        <CardContent className="p-6 text-center">
+          <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+            <X className="h-8 w-8 text-red-600" />
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            Access Denied
+          </h3>
+          <p className="text-gray-600 mb-4">
+            Only administrators can create or edit user accounts.
+          </p>
+          {onCancel && (
+            <Button onClick={onCancel} variant="outline">
+              {t('cancel')}
+            </Button>
+          )}
+        </CardContent>
+      </Card>
+    )
+  }
 
   return (
     <Card className="w-full max-w-2xl">

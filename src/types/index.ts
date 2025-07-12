@@ -133,6 +133,7 @@ export interface QuizQuestion {
   options?: string[]
   correct_answer?: string
   points: number
+  explanation?: string
 }
 
 // Submission Types
@@ -357,6 +358,60 @@ export interface CourseSettings {
   discussion_enabled: boolean
   created_at: string
   updated_at?: string
+}
+
+// Grading and Rubric Types
+export interface GradingRubric {
+  id: number
+  assignment_id: number
+  title: string
+  description?: string
+  criteria: RubricCriteria[]
+  total_points: number
+  created_at: string
+  updated_at?: string
+}
+
+export interface RubricCriteria {
+  id: number
+  name: string
+  description: string
+  weight: number // percentage of total grade
+  levels: RubricLevel[]
+}
+
+export interface RubricLevel {
+  id: number
+  name: string
+  description: string
+  points: number
+  quality: 'excellent' | 'good' | 'satisfactory' | 'needs_improvement' | 'poor'
+}
+
+export interface GradeEntry {
+  criteria_id: number
+  level_id: number
+  points: number
+  comments?: string
+}
+
+export interface SubmissionGrade {
+  id: number
+  submission_id: number
+  grader_id: number
+  rubric_id?: number
+  grade_entries: GradeEntry[]
+  total_points: number
+  percentage: number
+  overall_feedback?: string
+  graded_at: string
+}
+
+export interface GradingSession {
+  submission: SubmissionDetail
+  rubric?: GradingRubric
+  existing_grade?: SubmissionGrade
+  assignment: AssignmentDetail
 }
 
 // Navigation Types

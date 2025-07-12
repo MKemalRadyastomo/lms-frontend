@@ -118,7 +118,7 @@ export function UserList({ showCreateForm = false, onUserSelect }: UserListProps
       <Card>
         <CardContent className="p-6">
           <p className="text-center text-gray-500">
-            You don't have permission to view users.
+            You don&apos;t have permission to view users.
           </p>
         </CardContent>
       </Card>
