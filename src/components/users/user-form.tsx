@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useForm, Controller } from 'react-hook-form'
+import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { X, Loader2, Upload } from 'lucide-react'
@@ -10,7 +10,7 @@ import { z } from 'zod'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select' // Added import
+import { FormSelect } from '@/components/ui/form-select'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useToast } from '@/components/ui/use-toast'
 import { apiClient } from '@/lib/api'
@@ -59,7 +59,7 @@ export function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
     reset,
     setValue,
     watch,
-    control, // Added control for Controller
+    control,
   } = useForm<UserFormData>({
     resolver: zodResolver(userFormSchema),
     defaultValues: user ? {
@@ -195,7 +195,7 @@ export function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
   const isLoading = createUserMutation.isPending || updateUserMutation.isPending
 
   // Check if user has permission to create/edit users
-  if (!AuthManager.hasRole('admin')) {
+  if (!AuthManager.hasRole('admin') && !AuthManager.hasRole('instructor') && !AuthManager.hasRole('guru')) {
     return (
       <Card className="w-full max-w-2xl">
         <CardContent className="p-6 text-center">
@@ -344,37 +344,16 @@ export function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
           </div>
 
           {/* Role */}
-          <div className="space-y-2">
-            <Label htmlFor="role_id">Peran *</Label>
-            <Controller
-              name="role_id"
-              control={control}
-              render={({ field }) => (
-                <Select
-                  onValueChange={(value) => field.onChange(parseInt(value))}
-                  value={field.value?.toString() || ''}
-                  data-testid="role-select"
-                >
-                  <SelectTrigger
-                    id="role_id"
-                    className={errors.role_id ? 'border-red-500' : ''}
-                  >
-                    <SelectValue placeholder={t('select_role_placeholder')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {roleOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value.toString()}>
-                        {t(option.label)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            />
-            {errors.role_id && (
-              <p className="text-sm text-red-500">{errors.role_id.message}</p>
-            )}
-          </div>
+          <FormSelect
+            name="role_id"
+            control={control}
+            label="Peran *"
+            placeholder={t('select_role_placeholder')}
+            options={roleOptions.map(option => ({
+              value: option.value,
+              label: t(option.label)
+            }))}
+          />
 
           {/* Error Display */}
           {errors.root && (

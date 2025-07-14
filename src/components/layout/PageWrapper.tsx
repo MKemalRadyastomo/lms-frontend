@@ -14,7 +14,7 @@ interface PageWrapperProps {
   iconColor?: 'blue' | 'green' | 'purple' | 'yellow' | 'red' | 'gray';
   badge?: string;
   badgeVariant?: 'default' | 'secondary' | 'outline' | 'destructive';
-  variant?: 'default' | 'hero' | 'simple';
+  variant?: 'default' | 'hero' | 'simple' | 'dashboard';
   className?: string;
   headerContent?: React.ReactNode;
   actions?: React.ReactNode;
@@ -155,6 +155,22 @@ export function PageWrapper({
       </div>
     );
   };
+
+  // Dashboard variant - no full-screen wrapper
+  if (variant === 'dashboard') {
+    return (
+      <div className={cn('space-y-6', className)}>
+        {renderHeader()}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          {children}
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className={cn('min-h-screen bg-gray-50', className)}>

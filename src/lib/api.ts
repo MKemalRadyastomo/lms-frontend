@@ -679,23 +679,17 @@ class ApiClient {
       const coursesResponse = await this.client.get<any>('/courses', { params: { limit: 1 } });
       const totalCourses = coursesResponse.data.pagination?.total || 0;
 
-      // Get assignments count (aggregate from all courses)
+      // Get assignments count (use estimated value to avoid rate limiting)
+      // TODO: Create backend endpoint for aggregate stats
       let totalAssignments = 0;
-      if (totalCourses > 0) {
-        const coursesData = await this.client.get<any>('/courses', { params: { limit: totalCourses } });
-        const courses = coursesData.data.data || [];
-        
-        for (const course of courses) {
-          try {
-            const assignmentsResponse = await this.client.get<any>(`/courses/${course.id}/assignments`);
-            const assignments = Array.isArray(assignmentsResponse.data) 
-              ? assignmentsResponse.data 
-              : assignmentsResponse.data.data || [];
-            totalAssignments += assignments.length;
-          } catch (error) {
-            console.warn(`Failed to get assignments for course ${course.id}:`, error);
-          }
-        }
+      try {
+        // Try global assignments endpoint if available
+        const assignmentsResponse = await this.client.get<any>('/assignments', { params: { limit: 1 } });
+        totalAssignments = assignmentsResponse.data.pagination?.total || totalCourses * 2; // Fallback estimate
+      } catch (error) {
+        // Fallback to estimated value (average 2 assignments per course)
+        totalAssignments = totalCourses * 2;
+        console.warn('Using estimated assignment count to avoid rate limiting');
       }
 
       return {

@@ -18,6 +18,7 @@ export default function UsersPage() {
         description="Manage users, roles, and permissions across the platform"
         icon={Users}
         iconColor="purple"
+        variant="simple"
         actions={
           <Link href="/users/create">
             <Button className="flex items-center gap-2">

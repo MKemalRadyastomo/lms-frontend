@@ -2,8 +2,8 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Upload, X } from "lucide-react";
-import { Controller, useForm } from "react-hook-form";
+import { Loader2, X } from "lucide-react";
+import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
 
@@ -17,17 +17,10 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { FormSelect } from "@/components/ui/form-select";
 import { apiClient } from "@/lib/api";
 import { AuthManager } from "@/lib/auth";
 import { Course, CourseCreateData } from "@/types";
-import { ChangeEvent, useState } from "react";
 
 interface CourseFormProps {
   course?: Course;
@@ -40,18 +33,11 @@ export function CourseForm({ course, onSuccess, onCancel }: CourseFormProps) {
   const queryClient = useQueryClient();
   const isEditing = !!course;
   const currentUser = AuthManager.getUserData();
-  const [profileImage, setProfileImage] = useState<File | null>(null);
-  const [profileImagePreview, setProfileImagePreview] = useState<string | null>(
-    null
-  );
 
   const courseFormSchema = z.object({
-    name: z.string().min(3, t("course_name_min_length")),
+    name: z.string().min(3, "Course name must be at least 3 characters"),
     description: z.string().optional(),
     privacy: z.enum(["private", "public"]),
-    first_name: z.string().optional(),
-    last_name: z.string().optional(),
-    password: z.string().optional(),
   });
 
   type CourseFormData = z.infer<typeof courseFormSchema>;
@@ -122,8 +108,8 @@ export function CourseForm({ course, onSuccess, onCancel }: CourseFormProps) {
   });
 
   const privacyOptions = [
-    { value: "private", label: t("private_course_desc") },
-    { value: "public", label: t("public_course_desc") },
+    { value: "private", label: "Private - Only enrolled students can access" },
+    { value: "public", label: "Public - Anyone can discover and enroll" },
   ];
 
   const onSubmit = (data: CourseFormData) => {
@@ -166,29 +152,6 @@ export function CourseForm({ course, onSuccess, onCancel }: CourseFormProps) {
     );
   }
 
-  function handleFileChange(event: ChangeEvent<HTMLInputElement>): void {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    // Optional: Validate file type/size here
-    if (!file.type.startsWith("image/")) {
-      setError("root", { message: t("invalid_image_type") });
-      return;
-    }
-    if (file.size > 2 * 1024 * 1024) {
-      // 2MB limit
-      setError("root", { message: t("image_too_large") });
-      return;
-    }
-
-    setProfileImage(file);
-
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setProfileImagePreview(reader.result as string);
-    };
-    reader.readAsDataURL(file);
-  }
   return (
     <Card className="w-full max-w-2xl" data-testid="course-form">
       <CardHeader>
@@ -201,131 +164,41 @@ export function CourseForm({ course, onSuccess, onCancel }: CourseFormProps) {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {/* Profile Image Upload */}
+
+          {/* Course Name */}
           <div className="space-y-2">
-            <Label>{t("profile_photo")}</Label>
-            <div className="flex items-center space-x-4">
-              <div className="w-20 h-20 bg-gray-100 rounded-full overflow-hidden flex items-center justify-center">
-                {/* ... (image preview) ... */}
-              </div>
-              <div>
-                <input
-                  id="profile-image"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  className="hidden"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() =>
-                    document.getElementById("profile-image")?.click()
-                  }
-                >
-                  <Upload className="mr-2 h-4 w-4" />
-                  {t("upload_image")}
-                </Button>
-                <p className="text-xs text-gray-500 mt-1">
-                  {t("max_file_size_image")}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Username */}
-            <div className="space-y-2">
-              <Label htmlFor="name">{t("username")} *</Label>
-              <Input
-                id="name"
-                {...register("name")}
-                className={errors.name ? "border-red-500" : ""}
-                placeholder={t("enter_username")}
-                data-testid="course-form-name-input"
-              />
-              {errors.name && (
-                <p className="text-sm text-red-500">{errors.name.message}</p>
-              )}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* First Name */}
-            <div className="space-y-2">
-              <Label htmlFor="first_name">{t("first_name")}</Label>
-              <Input
-                id="first_name"
-                {...register("first_name")}
-                placeholder={t("enter_first_name")}
-              />
-            </div>
-
-            {/* Last Name */}
-            <div className="space-y-2">
-              <Label htmlFor="last_name">{t("last_name")}</Label>
-              <Input
-                id="last_name"
-                {...register("last_name")}
-                placeholder={t("enter_last_name")}
-              />
-            </div>
-          </div>
-
-          {/* Password */}
-          <div className="space-y-2">
-            <Label htmlFor="password">
-              {t("password")} {!isEditing && "*"}
-            </Label>
+            <Label htmlFor="name">Course Name *</Label>
             <Input
-              id="password"
-              type="password"
-              {...register("password")}
-              className={errors.password ? "border-red-500" : ""}
-              placeholder={
-                isEditing
-                  ? t("leave_blank_for_current_password")
-                  : t("enter_password")
-              }
+              id="name"
+              {...register("name")}
+              className={errors.name ? "border-red-500" : ""}
+              placeholder="Enter course name"
+              data-testid="course-form-name-input"
             />
-            {errors.password && (
-              <p className="text-sm text-red-500">{errors.password.message}</p>
+            {errors.name && (
+              <p className="text-sm text-red-500">{errors.name.message}</p>
             )}
+          </div>
+
+          {/* Course Description */}
+          <div className="space-y-2">
+            <Label htmlFor="description">Course Description</Label>
+            <Input
+              id="description"
+              {...register("description")}
+              placeholder="Enter course description (optional)"
+            />
           </div>
 
           {/* Privacy */}
-          <div className="space-y-2">
-            <Label htmlFor="privacy">{t("privacy")} *</Label>
-            <Controller
-              name="privacy"
-              control={control}
-              render={({ field }) => (
-                <Select
-                  onValueChange={field.onChange}
-                  value={field.value}
-                  data-testid="course-form-privacy-select"
-                >
-                  <SelectTrigger
-                    className={errors.privacy ? "border-red-500" : ""}
-                  >
-                    <SelectValue
-                      placeholder={t("select_privacy_placeholder")}
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {privacyOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            />
-            {errors.privacy && (
-              <p className="text-sm text-red-500">{errors.privacy.message}</p>
-            )}
-          </div>
+          <FormSelect
+            name="privacy"
+            control={control}
+            label="Course Visibility *"
+            placeholder="Select course visibility"
+            options={privacyOptions}
+            triggerClassName="data-[testid='course-form-privacy-select']"
+          />
 
           {/* Error Display */}
           {errors.root && (

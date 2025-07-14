@@ -42,11 +42,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     // Add test page for development
     if (process.env.NODE_ENV === "development") {
       baseItems.push({ name: t("test"), href: "/test", icon: Settings });
-      baseItems.push({
-        name: t("nav_test"),
-        href: "/test-nav",
-        icon: Settings,
-      });
     }
 
     // Add admin/instructor specific navigation

@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api';
 import { AssignmentFilters } from '@/components/assignments/assignment-filters';
 import { useAuth } from '@/hooks/useAuth';
-import { Assignment, Course } from '@/types';
+import { Assignment, AssignmentDetail, Course, AssignmentFilters as AssignmentFiltersType } from '@/types';
 import { AssignmentCard } from '@/components/assignments/assignment-card';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -21,6 +21,7 @@ const AssignmentsPage = () => {
   const { user, isLoading: isUserLoading } = useAuth();
   const [selectedCourse, setSelectedCourse] = useState<number | null>(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [activeFilters, setActiveFilters] = useState<Partial<AssignmentFiltersType>>({});
   const { t } = useTranslation();
 
   const userRole = user ? (user.role_id === 1 ? 'student' : user.role_id === 2 ? 'teacher' : 'admin') : 'student';
@@ -41,7 +42,7 @@ const AssignmentsPage = () => {
       const assignmentPromises = courses.data.map(async (course: Course) => {
         try {
           const response = await apiClient.getCourseAssignments(course.id);
-          return response.data.map((assignment: Assignment) => ({
+          return response.data.map((assignment: Assignment): AssignmentDetail => ({
             ...assignment,
             course_name: course.name,
             course_code: course.code
@@ -57,9 +58,50 @@ const AssignmentsPage = () => {
     enabled: !!courses?.data,
   });
 
-  const handleFilterChange = (filters: any) => {
-    console.log(filters);
+  const handleFilterChange = (filters: Partial<AssignmentFiltersType>) => {
+    setActiveFilters(filters);
   };
+
+  // Filter assignments based on active filters
+  const filteredAssignments = useMemo(() => {
+    if (!allAssignments) return [];
+    
+    return allAssignments.filter((assignment: AssignmentDetail) => {
+      // Search filter
+      if (activeFilters.search) {
+        const searchTerm = activeFilters.search.toLowerCase();
+        const matchesTitle = assignment.title.toLowerCase().includes(searchTerm);
+        const matchesDescription = assignment.description?.toLowerCase().includes(searchTerm);
+        const matchesCourse = assignment.course_name?.toLowerCase().includes(searchTerm);
+        
+        if (!matchesTitle && !matchesDescription && !matchesCourse) {
+          return false;
+        }
+      }
+
+      // Type filter
+      if (activeFilters.type && assignment.type !== activeFilters.type) {
+        return false;
+      }
+
+      // Status filter (basic implementation)
+      if (activeFilters.status) {
+        // For now, we'll implement basic status logic
+        // You can enhance this based on submission data
+        const currentDate = new Date();
+        const dueDate = assignment.due_date ? new Date(assignment.due_date) : null;
+        
+        if (activeFilters.status === 'overdue' && (!dueDate || dueDate >= currentDate)) {
+          return false;
+        }
+        if (activeFilters.status === 'pending' && dueDate && dueDate < currentDate) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [allAssignments, activeFilters]);
 
   if (isUserLoading || !user) {
     return (
@@ -139,7 +181,7 @@ const AssignmentsPage = () => {
       description={t('assignment_page_description')}
       icon={BookOpen}
       iconColor="blue"
-      badge={`${allAssignments.length} ${t('assignments').toLowerCase()}`}
+      badge={`${filteredAssignments.length} ${t('assignments').toLowerCase()}`}
       actions={
         <Button
           variant="outline"
@@ -166,9 +208,21 @@ const AssignmentsPage = () => {
       </AnimatePresence>
       
       <div className="space-y-6">
-        <motion.div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          <AnimatePresence>
-            {allAssignments.map((assignment: Assignment, index: number) => (
+        {filteredAssignments.length === 0 && allAssignments && allAssignments.length > 0 ? (
+          <div className="text-center py-12">
+            <div className="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+              <Filter className="h-8 w-8 text-gray-400" />
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">{t('no_assignments_match_filter')}</h3>
+            <p className="text-gray-600 mb-4">{t('try_adjusting_filters')}</p>
+            <Button variant="outline" onClick={() => setActiveFilters({})}>
+              {t('clear_filters')}
+            </Button>
+          </div>
+        ) : (
+          <motion.div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+            <AnimatePresence>
+              {filteredAssignments.map((assignment: AssignmentDetail, index: number) => (
               <motion.div
                 key={assignment.id}
                 layout
@@ -186,10 +240,11 @@ const AssignmentsPage = () => {
                   submissionStatus={'not_started'}
                   showCourseInfo={true}
                 />
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </motion.div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </motion.div>
+        )}
       </div>
     </PageWrapper>
   );

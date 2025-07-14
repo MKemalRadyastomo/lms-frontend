@@ -86,15 +86,15 @@ export default function DashboardPage() {
   }>({
     queryKey: ["dashboard-stats"],
     queryFn: () => apiClient.getDashboardStats(),
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes (was cacheTime in v4)
+    staleTime: 15 * 60 * 1000, // 15 minutes - increased to reduce API calls
+    gcTime: 30 * 60 * 1000, // 30 minutes
   });
 
   const { data: userStats } = useQuery({
     queryKey: ["user-stats", userId],
     queryFn: () => apiClient.getUserStats(userId!),
     enabled: !!userId && isStudent,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 15 * 60 * 1000, // Increased to reduce API calls
   });
 
   // Load profile stats for all users
@@ -119,7 +119,7 @@ export default function DashboardPage() {
       }
     },
     enabled: !!userId && !!user,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 15 * 60 * 1000, // Increased to reduce API calls
   });
 
   // Update profile stats when data changes

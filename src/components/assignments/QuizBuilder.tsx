@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { FormSelect } from '@/components/ui/form-select'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
@@ -29,12 +29,15 @@ import { cn } from '@/lib/utils'
 import { QuizQuestion } from '@/types'
 
 const questionTypeSchema = z.object({
-  type: z.enum(['multiple_choice', 'true_false', 'short_answer']),
+  type: z.enum(['multiple_choice', 'true_false', 'short_answer', 'essay', 'matching', 'fill_in_blank']),
   question: z.string().min(10, 'Question must be at least 10 characters'),
   options: z.array(z.string()).optional(),
-  correct_answer: z.string().min(1, 'Correct answer is required'),
+  correct_answer: z.union([z.string(), z.array(z.string())]).optional(),
   points: z.number().min(1, 'Points must be at least 1').max(100, 'Points cannot exceed 100'),
-  explanation: z.string().optional()
+  explanation: z.string().optional(),
+  difficulty: z.enum(['easy', 'medium', 'hard']).optional().default('medium'),
+  category: z.string().optional(),
+  tags: z.array(z.string()).optional().default([])
 })
 
 const quizSchema = z.object({
@@ -100,7 +103,10 @@ export default function QuizBuilder({
       options: type === 'multiple_choice' ? ['', '', '', ''] : undefined,
       correct_answer: '',
       points: 1,
-      explanation: ''
+      explanation: '',
+      difficulty: 'medium',
+      category: '',
+      tags: []
     }
 
     append(newQuestion)
@@ -434,20 +440,17 @@ function QuestionForm({
 
       {/* Question Type Selection */}
       <div className="space-y-2">
-        <Label>Question Type</Label>
-        <Select
-          value={questionType}
-          onValueChange={(value) => setValue(`questions.${index}.type`, value)}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Select question type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="multiple_choice">Multiple Choice</SelectItem>
-            <SelectItem value="true_false">True/False</SelectItem>
-            <SelectItem value="short_answer">Short Answer</SelectItem>
-          </SelectContent>
-        </Select>
+        <FormSelect
+          name={`questions.${index}.type`}
+          control={control}
+          label="Question Type"
+          options={[
+            { value: 'multiple_choice', label: 'Multiple Choice' },
+            { value: 'true_false', label: 'True/False' },
+            { value: 'short_answer', label: 'Short Answer' }
+          ]}
+          placeholder="Select question type"
+        />
       </div>
 
       {/* Multiple Choice Options */}
@@ -650,11 +653,43 @@ function QuestionPreview({ question }: { question: QuestionFormData }) {
           )}
         </div>
       )}
+      {question.type === 'essay' && (
+        <div className="p-4 bg-gray-50 rounded border-2 border-dashed">
+          <p className="text-sm text-gray-500">Essay response area (extended text)</p>
+          {question.correct_answer && (
+            <div className="mt-2 text-xs text-green-600">
+              <strong>Sample/Grading Criteria:</strong>
+              <p className="mt-1">{question.correct_answer}</p>
+            </div>
+          )}
+        </div>
+      )}
       {question.explanation && (
         <div className="text-sm text-gray-600 bg-blue-50 p-2 rounded">
           <strong>Explanation:</strong> {question.explanation}
         </div>
       )}
+      
+      {/* Question Metadata */}
+      <div className="flex flex-wrap gap-2 mt-3">
+        {question.difficulty && (
+          <Badge variant={question.difficulty === 'hard' ? 'destructive' : question.difficulty === 'medium' ? 'default' : 'secondary'}>
+            {question.difficulty}
+          </Badge>
+        )}
+        {question.category && (
+          <Badge variant="outline">
+            {question.category}
+          </Badge>
+        )}
+        {question.tags && question.tags.length > 0 && (
+          question.tags.map(tag => (
+            <Badge key={tag} variant="secondary" className="text-xs">
+              {tag}
+            </Badge>
+          ))
+        )}
+      </div>
     </div>
   )
 }

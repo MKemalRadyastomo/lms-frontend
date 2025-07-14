@@ -111,6 +111,7 @@ export interface Assignment {
 
 export interface AssignmentDetail extends Assignment {
   course_name?: string
+  course_code?: string
   teacher_name?: string
   submission?: Submission
 }
@@ -128,12 +129,15 @@ export interface AssignmentCreateData {
 
 export interface QuizQuestion {
   id: number
-  type: 'multiple_choice' | 'true_false' | 'short_answer'
+  type: 'multiple_choice' | 'true_false' | 'short_answer' | 'essay' | 'matching' | 'fill_in_blank'
   question: string
   options?: string[]
-  correct_answer?: string
+  correct_answer?: string | string[]
   points: number
   explanation?: string
+  difficulty?: 'easy' | 'medium' | 'hard'
+  category?: string
+  tags?: string[]
 }
 
 // Submission Types

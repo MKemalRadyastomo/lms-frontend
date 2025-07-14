@@ -17,10 +17,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { RefreshButton } from './RefreshButton'
+import AnalyticsExporter from './AnalyticsExporter'
 import { analyticsApi } from '@/lib/api/analytics'
 import { apiClient } from '@/lib/api'
 import { AuthManager } from '@/lib/auth'
 import { ProfileStatsComponent } from '@/components/profile/ProfileStats'
+import { 
+  GradeDistributionChart,
+  UserActivityChart,
+  PerformanceMetricsChart,
+  CourseProgressChart
+} from './charts'
 import { 
   StudentAnalytics, 
   InstructorAnalytics, 
@@ -78,8 +85,42 @@ export function AnalyticsDashboard({
       setError(null)
       if (!useCache) setIsRefreshing(true)
 
-      // For development, use mock data
-      setAnalyticsData(getMockData(userRole))
+      // Use real analytics API with fallback to mock data
+      try {
+        let analyticsResult
+        
+        switch (userRole) {
+          case 'student':
+            analyticsResult = await analyticsApi.getStudentAnalytics(user.id, { useCache, timeRange })
+            break
+          case 'instructor':
+            analyticsResult = await analyticsApi.getInstructorAnalytics(user.id, { useCache, timeRange })
+            break
+          case 'admin':
+            analyticsResult = await analyticsApi.getAdminAnalytics({ useCache, timeRange })
+            break
+          default:
+            throw new Error(`Unknown user role: ${userRole}`)
+        }
+        
+        setAnalyticsData(analyticsResult.data)
+        setLastUpdated(analyticsResult.lastUpdated)
+        setFromCache(analyticsResult.fromCache)
+        
+        console.log(`Analytics loaded for ${userRole}:`, {
+          fromCache: analyticsResult.fromCache,
+          lastUpdated: analyticsResult.lastUpdated,
+          dataSource: 'real_api'
+        })
+        
+      } catch (analyticsError) {
+        console.warn('Real analytics API failed, using fallback mock data:', analyticsError)
+        
+        // Fallback to mock data if analytics API fails
+        setAnalyticsData(getMockData(userRole))
+        setLastUpdated(new Date())
+        setFromCache(false)
+      }
       
       // Load profile stats
       try {
@@ -100,16 +141,18 @@ export function AnalyticsDashboard({
         })
       }
       
-      setLastUpdated(new Date())
-      setFromCache(useCache)
-      
-      // Simulate API delay
-      if (!useCache) {
-        await new Promise(resolve => setTimeout(resolve, 1000))
-      }
     } catch (error) {
       console.error('Error loading analytics:', error)
       setError(error instanceof Error ? error.message : t('failed_to_load_analytics'))
+      
+      // Final fallback to mock data on complete failure
+      try {
+        setAnalyticsData(getMockData(userRole))
+        setLastUpdated(new Date())
+        setFromCache(false)
+      } catch (fallbackError) {
+        console.error('Even fallback mock data failed:', fallbackError)
+      }
     } finally {
       setIsRefreshing(false)
     }
@@ -117,7 +160,32 @@ export function AnalyticsDashboard({
 
   // Refresh analytics data
   const refreshAnalytics = async () => {
-    await loadAnalytics(false)
+    if (!user || !user.id) {
+      console.log('User not available, skipping analytics refresh')
+      return
+    }
+
+    try {
+      setIsRefreshing(true)
+      setError(null)
+
+      // Use the refreshAnalytics method from the analytics API
+      const refreshResult = await analyticsApi.refreshAnalytics<StudentAnalytics | InstructorAnalytics | AdminAnalytics>(userRole, user.id, timeRange)
+      
+      setAnalyticsData(refreshResult.data)
+      setLastUpdated(refreshResult.lastUpdated)
+      setFromCache(false)
+      
+      console.log(`Analytics refreshed for ${userRole}:`, {
+        lastUpdated: refreshResult.lastUpdated,
+        dataSource: 'refreshed_api'
+      })
+      
+    } catch (error) {
+      console.warn('Analytics refresh failed, falling back to loadAnalytics:', error)
+      // Fall back to the regular load method without cache
+      await loadAnalytics(false)
+    }
   }
 
   // Load initial data
@@ -153,8 +221,8 @@ export function AnalyticsDashboard({
   }
 
   return (
-    <div className={`space-y-6 ${className}`}>
-      {/* Header with Refresh Button */}
+    <div className={`space-y-6 ${className}`} data-analytics-dashboard>
+      {/* Header with Refresh Button and Export */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">{t('analytics_dashboard_title')}</h2>
@@ -165,12 +233,21 @@ export function AnalyticsDashboard({
           </p>
         </div>
         
-        <RefreshButton
-          onRefresh={refreshAnalytics}
-          lastUpdated={lastUpdated}
-          isRefreshing={isRefreshing}
-          fromCache={fromCache}
-        />
+        <div className="flex items-center gap-3">
+          {analyticsData && (
+            <AnalyticsExporter 
+              data={analyticsData}
+              userRole={userRole}
+            />
+          )}
+          
+          <RefreshButton
+            onRefresh={refreshAnalytics}
+            lastUpdated={lastUpdated}
+            isRefreshing={isRefreshing}
+            fromCache={fromCache}
+          />
+        </div>
       </div>
 
       {/* Analytics Content */}
@@ -231,40 +308,24 @@ function StudentAnalyticsView({ data, compact, dateFnsLocale, profileStats }: { 
 
       {!compact && (
         <>
-          {/* Course Progress Details */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BookOpen className="h-5 w-5" />
-                {t('course_progress')}
-              </CardTitle>
-              <CardDescription>{t('course_progress_description')}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {data.courseProgress.map((course) => (
-                <div key={course.courseId} className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="font-medium">{course.courseName}</h4>
-                      <p className="text-sm text-gray-600">
-                        {t('modules_completed', { completed: course.completedModules, total: course.totalModules })}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-lg font-semibold">{course.progressPercentage}%</span>
-                      <Badge variant={course.difficulty === 'hard' ? 'destructive' : course.difficulty === 'medium' ? 'default' : 'secondary'} className="ml-2">
-                        {t(course.difficulty)}
-                      </Badge>
-                    </div>
-                  </div>
-                  <Progress value={course.progressPercentage} className="h-2" />
-                  <p className="text-xs text-gray-500">
-                    {t('last_activity')}: {formatDistanceToNow(new Date(course.lastActivity), { addSuffix: true, locale: dateFnsLocale })}
-                  </p>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
+          {/* Course Progress Chart */}
+          <CourseProgressChart 
+            data={data.courseProgress}
+            title={t('course_progress_overview')}
+            description={t('detailed_progress_across_courses')}
+            type="list"
+            showDetails={true}
+          />
+          
+          {/* Grade Analytics Chart */}
+          {data.gradeAnalytics.gradeDistribution.length > 0 && (
+            <GradeDistributionChart
+              data={data.gradeAnalytics.gradeDistribution}
+              title={t('grade_distribution_analysis')}
+              description={t('breakdown_of_grades_across_assignments')}
+              type="bar"
+            />
+          )}
 
           {/* Upcoming Deadlines */}
           {data.upcomingDeadlines.length > 0 && (
@@ -383,6 +444,102 @@ function AdminAnalyticsView({ data, compact }: { data: AdminAnalytics; compact: 
           subtitle={t('response_time')}
         />
       </div>
+
+      {!compact && (
+        <>
+          {/* Performance Metrics Chart */}
+          <PerformanceMetricsChart
+            data={data.performanceBenchmarks}
+            title={t('system_performance_metrics')}
+            description={t('comprehensive_system_health_analysis')}
+            showDetailedMetrics={true}
+          />
+
+          {/* User Activity Trends */}
+          {data.userActivityTrends && data.userActivityTrends.length > 0 && (
+            <UserActivityChart
+              data={data.userActivityTrends}
+              title={t('user_activity_trends')}
+              description={t('daily_platform_activity_overview')}
+              type="line"
+              showMetrics={true}
+            />
+          )}
+
+          {/* Platform Growth Overview */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Course Categories Distribution */}
+            {data.courseMetrics.topCategories && data.courseMetrics.topCategories.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BookOpen className="h-5 w-5" />
+                    {t('top_course_categories')}
+                  </CardTitle>
+                  <CardDescription>{t('most_popular_course_categories')}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {data.courseMetrics.topCategories.map((category, index) => (
+                      <div key={category.category} className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium">{category.category}</span>
+                          <span className="text-sm text-gray-600">
+                            {category.courseCount} {t('courses')} • {category.enrollment} {t('students')}
+                          </span>
+                        </div>
+                        <Progress 
+                          value={(category.enrollment / data.systemStats.totalUsers) * 100} 
+                          className="h-2" 
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* System Statistics */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5" />
+                  {t('platform_statistics')}
+                </CardTitle>
+                <CardDescription>{t('key_platform_metrics')}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                    <span className="font-medium">{t('system_uptime')}</span>
+                    <span className="text-lg font-bold text-blue-600">
+                      {data.systemStats.systemUptime.toFixed(1)}%
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                    <span className="font-medium">{t('avg_grade_system')}</span>
+                    <span className="text-lg font-bold text-green-600">
+                      {data.performanceBenchmarks.averageGradeAcrossSystem.toFixed(1)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                    <span className="font-medium">{t('completion_rate')}</span>
+                    <span className="text-lg font-bold text-purple-600">
+                      {data.performanceBenchmarks.courseCompletionRate.toFixed(1)}%
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
+                    <span className="font-medium">{t('user_engagement')}</span>
+                    <span className="text-lg font-bold text-orange-600">
+                      {data.performanceBenchmarks.userEngagementRate.toFixed(1)}%
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </>
+      )}
     </div>
   )
 }

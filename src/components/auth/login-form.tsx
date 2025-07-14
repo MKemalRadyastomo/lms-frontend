@@ -27,6 +27,7 @@ export function LoginForm() {
     handleSubmit,
     formState: { errors },
     setError,
+    clearErrors,
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
   })
@@ -134,7 +135,7 @@ export function LoginForm() {
 
   const onSubmit = (data: LoginFormData) => {
     // Clear previous errors before new attempt
-    setError('root', { message: '' })
+    clearErrors('root')
     loginMutation.mutate(data)
   }
 

@@ -67,11 +67,15 @@ const assignmentFormSchema = z.object({
   max_file_size_mb: z.number().min(1).max(100).optional(),
   quiz_questions_json: z.array(z.object({
     id: z.number(),
-    type: z.enum(['multiple_choice', 'true_false', 'short_answer']),
+    type: z.enum(['multiple_choice', 'true_false', 'short_answer', 'essay', 'matching', 'fill_in_blank']),
     question: z.string().min(5, 'Pertanyaan harus minimal 5 karakter'),
     options: z.array(z.string()).optional(),
-    correct_answer: z.string().min(1, 'Jawaban benar harus diisi'),
-    points: z.number().min(1, 'Poin harus minimal 1')
+    correct_answer: z.union([z.string(), z.array(z.string())]).optional(),
+    points: z.number().min(1, 'Poin harus minimal 1'),
+    explanation: z.string().optional(),
+    difficulty: z.enum(['easy', 'medium', 'hard']).optional(),
+    category: z.string().optional(),
+    tags: z.array(z.string()).optional()
   })).optional().default([]),
 });
 

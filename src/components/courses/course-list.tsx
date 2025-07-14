@@ -89,46 +89,25 @@ export function CourseList({ showCreateForm = false, onCourseSelect }: CourseLis
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Manajemen Kursus</h2>
-          <p className="text-gray-600">
-            {AuthManager.hasRole('admin') 
-              ? 'Kelola semua kursus dalam platform' 
-              : AuthManager.hasRole('guru')
-              ? 'Kelola kursus Anda'
-              : 'Jelajahi kursus yang tersedia'
-            }
-          </p>
-        </div>
-        <div className="flex items-center space-x-2">
-          {/* View Mode Toggle */}
-          <div className="flex bg-gray-100 rounded-lg p-1">
-            <Button
-              variant={viewMode === 'grid' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setViewMode('grid')}
-              className="h-8"
-            >
-              <Grid3X3 className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={viewMode === 'list' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setViewMode('list')}
-              className="h-8"
-            >
-              <List className="h-4 w-4" />
-            </Button>
-          </div>
-          
-          {canCreateCourse && (
-            <Button onClick={() => setShowForm(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Buat Kursus
-            </Button>
-          )}
+      {/* View Controls */}
+      <div className="flex justify-end">
+        <div className="flex bg-gray-100 rounded-lg p-1">
+          <Button
+            variant={viewMode === 'grid' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setViewMode('grid')}
+            className="h-8"
+          >
+            <Grid3X3 className="h-4 w-4" />
+          </Button>
+          <Button
+            variant={viewMode === 'list' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setViewMode('list')}
+            className="h-8"
+          >
+            <List className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 
@@ -149,7 +128,7 @@ export function CourseList({ showCreateForm = false, onCourseSelect }: CourseLis
             </div>
             <div className="flex gap-2">
               <Select
-                value={privacyFilter}
+                value={privacyFilter || 'all'}
                 onValueChange={(value) => setPrivacyFilter(value === 'all' ? '' : value)}
               >
                 <SelectTrigger className="w-[180px]">
@@ -161,9 +140,6 @@ export function CourseList({ showCreateForm = false, onCourseSelect }: CourseLis
                   <SelectItem value="public">{t('public')}</SelectItem>
                 </SelectContent>
               </Select>
-              <Button variant="outline" size="icon">
-                <Filter className="h-4 w-4" />
-              </Button>
             </div>
           </div>
         </CardContent>

@@ -253,3 +253,62 @@ export interface AnalyticsRequest {
   timeRange?: 'week' | 'month' | 'semester' | 'year'
   includeCache?: boolean
 }
+
+// New dedicated analytics types for enhanced backend integration
+
+export interface SystemAnalytics extends AdminAnalytics {
+  // System analytics is an alias for admin analytics but from dedicated endpoint
+}
+
+export interface CourseAnalytics {
+  enrollmentStats: {
+    totalEnrolled: number
+    activeStudents: number
+    completionRate: number
+    dropoutRate: number
+  }
+  performanceMetrics: {
+    averageGrade: number
+    gradeDistribution: GradeDistribution[]
+    assignmentCompletionRate: number
+  }
+  engagementData: {
+    averageTimeSpent: number // minutes per week
+    materialViewCount: number
+    discussionParticipation: number // percentage
+  }
+  progressTracking: StudentProgressSummary[]
+}
+
+export interface StudentProgressSummary {
+  studentId: number
+  studentName: string
+  progressPercentage: number
+  lastActivity: string
+  completedAssignments: number
+  totalAssignments: number
+}
+
+export interface AssignmentStatistics {
+  submissionStats: {
+    totalSubmissions: number
+    onTimeSubmissions: number
+    lateSubmissions: number
+    averageScore: number
+  }
+  gradeDistribution: GradeDistribution[]
+  completionRate: number
+  timeToComplete: {
+    average: number // minutes
+    median: number // minutes
+    range: {
+      min: number
+      max: number
+    }
+  }
+  difficultyMetrics: {
+    averageAttempts: number
+    successRate: number // percentage
+    commonMistakes: string[]
+  }
+}

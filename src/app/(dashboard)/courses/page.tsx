@@ -25,6 +25,7 @@ export default function CoursesPage() {
         }
         icon={BookOpen}
         iconColor="blue"
+        variant="simple"
         actions={
           (userRole === 'teacher' || userRole === 'admin') && (
             <Button className="flex items-center gap-2" asChild>

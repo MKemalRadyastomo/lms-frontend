@@ -51,7 +51,7 @@ export function UserList({ showCreateForm = false, onUserSelect }: UserListProps
   const { data: usersData, isLoading, error } = useQuery({
     queryKey: ['users', filters],
     queryFn: () => apiClient.getUsers(filters),
-    enabled: AuthManager.hasRole('admin') || AuthManager.hasRole('instructor'),
+    enabled: AuthManager.hasRole('admin') || AuthManager.hasRole('instructor') || AuthManager.hasRole('guru'),
   })
 
   const deleteUserMutation = useMutation({
@@ -113,7 +113,7 @@ export function UserList({ showCreateForm = false, onUserSelect }: UserListProps
     }
   }
 
-  if (!AuthManager.hasRole('admin') && !AuthManager.hasRole('instructor')) {
+  if (!AuthManager.hasRole('admin') && !AuthManager.hasRole('instructor') && !AuthManager.hasRole('guru')) {
     return (
       <Card>
         <CardContent className="p-6">
@@ -137,24 +137,6 @@ export function UserList({ showCreateForm = false, onUserSelect }: UserListProps
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">User Management</h2>
-          <p className="text-gray-600">
-            {AuthManager.hasRole('admin') 
-              ? 'Manage users, roles, and permissions' 
-              : 'View users and their information'
-            }
-          </p>
-        </div>
-        {AuthManager.hasRole('admin') && (
-          <Button onClick={() => setShowForm(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add User
-          </Button>
-        )}
-      </div>
 
       {/* Filters */}
       <Card>

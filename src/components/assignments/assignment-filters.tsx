@@ -5,13 +5,7 @@ import * as z from 'zod';
 import { AssignmentFilters as AssignmentFiltersType } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { FormSelect } from '@/components/ui/form-select';
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
 import { useTranslation } from 'react-i18next';
 
@@ -62,60 +56,30 @@ export const AssignmentFilters: React.FC<AssignmentFiltersProps> = ({ onFilterCh
             </FormItem>
           )}
         />
-        <FormField
-          control={control}
+        <FormSelect
           name="type"
-          render={({ field }) => (
-            <FormItem>
-              <Controller
-                name="type"
-                control={control}
-                render={({ field }) => (
-                  <Select onValueChange={field.onChange} value={field.value} data-testid="assignment-type-select">
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder={t('type')} />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="all">{t('all_types')}</SelectItem>
-                      <SelectItem value="essay">{t('essay')}</SelectItem>
-                      <SelectItem value="file_upload">{t('file_upload')}</SelectItem>
-                      <SelectItem value="quiz">{t('quiz')}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-            </FormItem>
-          )}
-        />
-        <FormField
           control={control}
+          options={[
+            { value: 'all', label: t('all_types') },
+            { value: 'essay', label: t('essay') },
+            { value: 'file_upload', label: t('file_upload') },
+            { value: 'quiz', label: t('quiz') }
+          ]}
+          placeholder={t('type')}
+          className="data-[testid='assignment-type-select']"
+        />
+        <FormSelect
           name="status"
-          render={({ field }) => (
-            <FormItem>
-              <Controller
-                name="status"
-                control={control}
-                render={({ field }) => (
-                  <Select onValueChange={field.onChange} value={field.value} data-testid="assignment-status-select">
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder={t('status')} />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="all">{t('all_statuses')}</SelectItem>
-                      <SelectItem value="pending">{t('pending')}</SelectItem>
-                      <SelectItem value="submitted">{t('submitted')}</SelectItem>
-                      <SelectItem value="graded">{t('graded')}</SelectItem>
-                      <SelectItem value="overdue">{t('overdue')}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-            </FormItem>
-          )}
+          control={control}
+          options={[
+            { value: 'all', label: t('all_statuses') },
+            { value: 'pending', label: t('pending') },
+            { value: 'submitted', label: t('submitted') },
+            { value: 'graded', label: t('graded') },
+            { value: 'overdue', label: t('overdue') }
+          ]}
+          placeholder={t('status')}
+          className="data-[testid='assignment-status-select']"
         />
         <Button type="submit" data-testid="assignment-filter-button">{t('filter')}</Button>
       </form>
