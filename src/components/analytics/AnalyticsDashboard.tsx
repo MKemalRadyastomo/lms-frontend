@@ -214,6 +214,7 @@ export function AnalyticsDashboard({
             isRefreshing={isRefreshing}
             fromCache={fromCache}
             variant="default"
+            enableAutoRefresh={false}
           />
         </div>
       </Card>
@@ -246,6 +247,8 @@ export function AnalyticsDashboard({
             lastUpdated={lastUpdated}
             isRefreshing={isRefreshing}
             fromCache={fromCache}
+            enableAutoRefresh={true}
+            defaultRefreshInterval={60}
           />
         </div>
       </div>

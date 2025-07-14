@@ -73,67 +73,47 @@ class AnalyticsApiClient {
   private async fetchSystemAnalytics(): Promise<AdminAnalytics> {
     // Try to use dedicated analytics endpoint, but it may not exist yet
     try {
-      const response = await fetch('/api/analytics/system', {
-        headers: { 'Authorization': `Bearer ${document.cookie.match(/auth_token=([^;]+)/)?.[1]}` }
-      })
-      if (response.ok) {
-        const data = await response.json()
-        return this.mapSystemAnalyticsResponse(data)
-      }
+      const data = await this.client.getSystemAnalytics()
+      return this.mapSystemAnalyticsResponse(data)
     } catch (error) {
       console.warn('Dedicated system analytics endpoint not available:', error)
+      throw new Error('System analytics endpoint not available')
     }
-    throw new Error('System analytics endpoint not available')
   }
 
   // Fetch user analytics from backend  
   private async fetchUserAnalytics(userId: number, role: string): Promise<StudentAnalytics | InstructorAnalytics> {
     try {
-      const response = await fetch(`/api/analytics/user/${userId}`, {
-        headers: { 'Authorization': `Bearer ${document.cookie.match(/auth_token=([^;]+)/)?.[1]}` }
-      })
-      if (response.ok) {
-        const data = await response.json()
-        return role === 'student' 
-          ? this.mapStudentAnalyticsResponse(data)
-          : this.mapInstructorAnalyticsResponse(data)
-      }
+      const data = await this.client.getUserAnalytics(userId)
+      return role === 'student' 
+        ? this.mapStudentAnalyticsResponse(data)
+        : this.mapInstructorAnalyticsResponse(data)
     } catch (error) {
       console.warn('Dedicated user analytics endpoint not available:', error)
+      throw new Error('User analytics endpoint not available')
     }
-    throw new Error('User analytics endpoint not available')
   }
 
   // Fetch course analytics from backend
   private async fetchCourseAnalytics(courseId: number): Promise<CourseAnalytics> {
     try {
-      const response = await fetch(`/api/analytics/course/${courseId}`, {
-        headers: { 'Authorization': `Bearer ${document.cookie.match(/auth_token=([^;]+)/)?.[1]}` }
-      })
-      if (response.ok) {
-        const data = await response.json()
-        return this.mapCourseAnalyticsResponse(data)
-      }
+      const data = await this.client.getCourseAnalytics(courseId)
+      return this.mapCourseAnalyticsResponse(data)
     } catch (error) {
       console.warn('Dedicated course analytics endpoint not available:', error)
+      throw new Error('Course analytics endpoint not available')
     }
-    throw new Error('Course analytics endpoint not available')
   }
 
   // Fetch assignment statistics from backend
   private async fetchAssignmentStatistics(assignmentId: number): Promise<AssignmentStatistics> {
     try {
-      const response = await fetch(`/api/assignments/${assignmentId}/statistics`, {
-        headers: { 'Authorization': `Bearer ${document.cookie.match(/auth_token=([^;]+)/)?.[1]}` }
-      })
-      if (response.ok) {
-        const data = await response.json()
-        return this.mapAssignmentStatisticsResponse(data)
-      }
+      const data = await this.client.getAssignmentStatistics(assignmentId)
+      return this.mapAssignmentStatisticsResponse(data)
     } catch (error) {
       console.warn('Dedicated assignment statistics endpoint not available:', error)
+      throw new Error('Assignment statistics endpoint not available')
     }
-    throw new Error('Assignment statistics endpoint not available')
   }
 
   // Map backend system analytics response to frontend format

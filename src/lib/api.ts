@@ -945,6 +945,27 @@ class ApiClient {
     return response.data;
   }
 
+  // Analytics Methods
+  async getSystemAnalytics(): Promise<any> {
+    const response = await this.client.get("/analytics/system");
+    return response.data;
+  }
+
+  async getUserAnalytics(userId: number): Promise<any> {
+    const response = await this.client.get(`/analytics/user/${userId}`);
+    return response.data;
+  }
+
+  async getCourseAnalytics(courseId: number): Promise<any> {
+    const response = await this.client.get(`/analytics/course/${courseId}`);
+    return response.data;
+  }
+
+  async getAssignmentStatistics(assignmentId: number): Promise<any> {
+    const response = await this.client.get(`/assignments/${assignmentId}/statistics`);
+    return response.data;
+  }
+
   // Utility Methods
   async getApiVersion(): Promise<{
     version: string;

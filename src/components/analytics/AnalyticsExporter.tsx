@@ -18,6 +18,8 @@ import {
   AdminAnalytics,
   UserRole
 } from '@/types/analytics'
+import * as XLSX from 'xlsx'
+import html2canvas from 'html2canvas'
 
 interface AnalyticsExporterProps {
   data: StudentAnalytics | InstructorAnalytics | AdminAnalytics
@@ -155,26 +157,174 @@ export function AnalyticsExporter({ data, userRole, className = '' }: AnalyticsE
   }
 
   const exportToExcel = async (analytics: any, filename: string, role: UserRole) => {
-    // For now, export as CSV with .xlsx extension
-    // In a real implementation, you'd use a library like SheetJS
-    await exportToCSV(analytics, filename, role)
-    toast.info(t('excel_export_note'))
+    const workbook = XLSX.utils.book_new()
+    
+    if (role === 'student') {
+      const studentData = analytics as StudentAnalytics
+      
+      // Course Progress Sheet
+      const courseProgressData = [
+        ['Course', 'Progress %', 'Completed Modules', 'Total Modules', 'Difficulty', 'Last Activity'],
+        ...studentData.courseProgress.map(course => [
+          course.courseName,
+          course.progressPercentage,
+          course.completedModules,
+          course.totalModules,
+          course.difficulty,
+          new Date(course.lastActivity).toLocaleDateString()
+        ])
+      ]
+      const courseProgressSheet = XLSX.utils.aoa_to_sheet(courseProgressData)
+      XLSX.utils.book_append_sheet(workbook, courseProgressSheet, 'Course Progress')
+      
+      // Assignment Statistics Sheet
+      const assignmentStatsData = [
+        ['Metric', 'Value'],
+        ['Total Assignments', studentData.assignmentStats.total],
+        ['Completed', studentData.assignmentStats.completed],
+        ['Pending', studentData.assignmentStats.pending],
+        ['Overdue', studentData.assignmentStats.overdue],
+        ['Average Grade', studentData.assignmentStats.averageGrade || 'N/A'],
+        ['Completion Rate (%)', studentData.assignmentStats.completionRate]
+      ]
+      const assignmentSheet = XLSX.utils.aoa_to_sheet(assignmentStatsData)
+      XLSX.utils.book_append_sheet(workbook, assignmentSheet, 'Assignment Stats')
+      
+      // Grade Distribution Sheet
+      if (studentData.gradeAnalytics.gradeDistribution.length > 0) {
+        const gradeDistData = [
+          ['Grade Range', 'Count', 'Percentage'],
+          ...studentData.gradeAnalytics.gradeDistribution.map(grade => [
+            grade.range,
+            grade.count,
+            `${grade.percentage.toFixed(1)}%`
+          ])
+        ]
+        const gradeDistSheet = XLSX.utils.aoa_to_sheet(gradeDistData)
+        XLSX.utils.book_append_sheet(workbook, gradeDistSheet, 'Grade Distribution')
+      }
+      
+    } else if (role === 'instructor') {
+      const instructorData = analytics as InstructorAnalytics
+      
+      // Class Performance Sheet
+      const classPerformanceData = [
+        ['Course', 'Students', 'Average Grade', 'Completion Rate (%)', 'Engagement Score', 'Struggling Students', 'Top Performers'],
+        ...instructorData.classPerformance.map(cls => [
+          cls.courseName,
+          cls.studentCount,
+          cls.averageGrade.toFixed(1),
+          cls.completionRate,
+          cls.engagementScore,
+          cls.strugglingStudents,
+          cls.topPerformers
+        ])
+      ]
+      const classPerformanceSheet = XLSX.utils.aoa_to_sheet(classPerformanceData)
+      XLSX.utils.book_append_sheet(workbook, classPerformanceSheet, 'Class Performance')
+      
+      // Student Engagement Sheet
+      const studentEngagementData = [
+        ['Student', 'Last Activity', 'Engagement Score', 'Risk Level', 'Courses Enrolled', 'Assignments Completed'],
+        ...instructorData.studentEngagement.map(student => [
+          student.studentName,
+          new Date(student.lastActivity).toLocaleDateString(),
+          student.engagementScore,
+          student.riskLevel,
+          student.coursesEnrolled,
+          student.assignmentsCompleted
+        ])
+      ]
+      const studentEngagementSheet = XLSX.utils.aoa_to_sheet(studentEngagementData)
+      XLSX.utils.book_append_sheet(workbook, studentEngagementSheet, 'Student Engagement')
+      
+    } else if (role === 'admin') {
+      const adminData = analytics as AdminAnalytics
+      
+      // System Statistics Sheet
+      const systemStatsData = [
+        ['Metric', 'Value'],
+        ['Total Users', adminData.systemStats.totalUsers],
+        ['Active Users', adminData.systemStats.activeUsers],
+        ['Total Courses', adminData.systemStats.totalCourses],
+        ['Total Assignments', adminData.systemStats.totalAssignments],
+        ['Total Submissions', adminData.systemStats.totalSubmissions],
+        ['System Uptime (%)', adminData.systemStats.systemUptime.toFixed(1)],
+        ['Storage Used (GB)', adminData.systemStats.storageUsed.toFixed(1)],
+        ['Bandwidth Usage (GB)', adminData.systemStats.bandwidthUsage.toFixed(1)]
+      ]
+      const systemStatsSheet = XLSX.utils.aoa_to_sheet(systemStatsData)
+      XLSX.utils.book_append_sheet(workbook, systemStatsSheet, 'System Statistics')
+      
+      // Performance Benchmarks Sheet
+      const performanceData = [
+        ['Metric', 'Value'],
+        ['Average Grade Across System', adminData.performanceBenchmarks.averageGradeAcrossSystem.toFixed(1)],
+        ['Course Completion Rate (%)', adminData.performanceBenchmarks.courseCompletionRate.toFixed(1)],
+        ['User Engagement Rate (%)', adminData.performanceBenchmarks.userEngagementRate.toFixed(1)],
+        ['System Response Time (ms)', adminData.performanceBenchmarks.systemResponseTime.toFixed(0)],
+        ['Error Rate (%)', (adminData.performanceBenchmarks.errorRate * 100).toFixed(2)]
+      ]
+      const performanceSheet = XLSX.utils.aoa_to_sheet(performanceData)
+      XLSX.utils.book_append_sheet(workbook, performanceSheet, 'Performance Metrics')
+      
+      // Course Categories Sheet
+      if (adminData.courseMetrics.topCategories && adminData.courseMetrics.topCategories.length > 0) {
+        const categoriesData = [
+          ['Category', 'Course Count', 'Total Enrollment'],
+          ...adminData.courseMetrics.topCategories.map(category => [
+            category.category,
+            category.courseCount,
+            category.enrollment
+          ])
+        ]
+        const categoriesSheet = XLSX.utils.aoa_to_sheet(categoriesData)
+        XLSX.utils.book_append_sheet(workbook, categoriesSheet, 'Course Categories')
+      }
+    }
+    
+    // Write the file
+    XLSX.writeFile(workbook, `${filename}.xlsx`)
   }
 
   const exportToPNG = async (filename: string) => {
     // Capture the analytics dashboard as PNG
     try {
-      // Use html2canvas library if available, otherwise provide instructions
-      const dashboardElement = document.querySelector('[data-analytics-dashboard]')
+      const dashboardElement = document.querySelector('[data-analytics-dashboard]') as HTMLElement
       if (!dashboardElement) {
         throw new Error('Analytics dashboard not found')
       }
 
-      // For now, provide instructions since html2canvas isn't installed
-      toast.info(t('screenshot_instructions'))
+      // Configure html2canvas options for better quality
+      const canvas = await html2canvas(dashboardElement, {
+        backgroundColor: '#ffffff',
+        scale: 2, // Higher resolution
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+        width: dashboardElement.scrollWidth,
+        height: dashboardElement.scrollHeight,
+        scrollX: 0,
+        scrollY: 0
+      })
+
+      // Convert canvas to blob and download
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          throw new Error('Failed to generate image')
+        }
+        
+        const url = URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        link.download = `${filename}.png`
+        link.click()
+        URL.revokeObjectURL(url)
+      }, 'image/png', 0.95)
       
     } catch (error) {
-      throw new Error('PNG export not available')
+      console.error('PNG export error:', error)
+      throw new Error('PNG export failed: ' + (error instanceof Error ? error.message : 'Unknown error'))
     }
   }
 
